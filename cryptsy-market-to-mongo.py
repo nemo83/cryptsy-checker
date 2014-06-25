@@ -1,8 +1,8 @@
 #!/usr/bin/python
 import urllib2
-import simplejson
 import datetime
 
+import simplejson
 from pymongo.mongo_client import MongoClient
 
 
@@ -33,7 +33,7 @@ def main():
                                      lasttradeprice=markets[market]["lasttradeprice"],
                                      lasttradetime=markets[market]["lasttradetime"]))
 
-        activeMarkets = filter(lambda x: float(x.lasttradeprice) != 0.0, allMarkets)
+        activeMarkets = filter(lambda x: x.lasttradeprice is not None and float(x.lasttradeprice) != 0.0, allMarkets)
 
         client = MongoClient()
 
