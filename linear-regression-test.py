@@ -92,20 +92,19 @@ def investBTC(public, private, btcBalance, openBuyMarkets, cryptsyMarketData):
         if btcBalance < AMOUNT_TO_INVEST:
             break
 
-        print marketTrend
-
         url = 'https://api.cryptsy.com/api'
+        quantity = (AMOUNT_TO_INVEST - AMOUNT_TO_INVEST * 0.0025) / marketTrend.buy
+
+        print "Sell {}, qty: {}, price: {}".format(marketName, quantity, marketTrend.buy)
+
         postData = "method={}&marketid={}&ordertype=Buy&quantity={}&price={}&nonce={}".format("createorder",
                                                                                               marketTrend.id,
-                                                                                              "%.8f" % round((
-                                                                                                                 AMOUNT_TO_INVEST - AMOUNT_TO_INVEST * 0.0025) / marketTrend.buy,
+                                                                                              "%.8f" % round(quantity,
                                                                                                              8),
                                                                                               "%.8f" % round(
-                                                                                                  marketTrend.buy,
-                                                                                                  8),
-                                                                                              int(time.time()))
-        print postData
+                                                                                                  marketTrend.buy, 8),
 
+                                                                                              int(time.time()))
         message = bytes(postData).encode('utf-8')
         secret = bytes(private).encode('utf-8')
         signature = hmac.new(secret, message, digestmod=hashlib.sha512).hexdigest()
@@ -121,9 +120,15 @@ def investBTC(public, private, btcBalance, openBuyMarkets, cryptsyMarketData):
 
 
 def main(argv):
+    print "Started."
+
     public, private = getEnv(argv)
 
     balanceList = getInfo(public, private)
+
+    print "Current Balance:"
+    for balance in balanceList:
+        print "{}, {}".format(balance[0], balance[1])
 
     cryptsyMarketData = loadCryptsyMarketData()
 
@@ -150,6 +155,8 @@ def main(argv):
 
             sell = numpy.average(prices) + numpy.std(prices)
 
+            print "Sell {}, qty: {}, price: {}".format(marketName, balance[1], sell)
+
             url = 'https://api.cryptsy.com/api'
             postData = "method={}&marketid={}&ordertype=Sell&quantity={}&price={}&nonce={}".format("createorder",
                                                                                                    cryptsyMarketData[
@@ -172,6 +179,8 @@ def main(argv):
             responseBody = ast.literal_eval(r.content)
             if int(responseBody['success']) != 1:
                 print "Error when invoking cryptsy authenticated API"
+
+    print "Complete"
 
 
 def getInfo(public, private):
