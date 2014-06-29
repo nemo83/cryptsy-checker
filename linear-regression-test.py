@@ -85,42 +85,39 @@ def investBTC(public, private, btcBalance, openBuyMarkets, cryptsyMarketData):
 
         marketTrends.append(marketTrend)
 
-    sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001,
+    sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 4 * 0.0025 * x.avg,
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
     for marketTrend in sortedMarketTrends:
+        if btcBalance < AMOUNT_TO_INVEST:
+            break
+
         print marketTrend
 
-        for marketTrend in sortedMarketTrends:
-            if btcBalance < AMOUNT_TO_INVEST:
-                break
+        url = 'https://api.cryptsy.com/api'
+        postData = "method={}&marketid={}&ordertype=Buy&quantity={}&price={}&nonce={}".format("createorder",
+                                                                                              marketTrend.id,
+                                                                                              "%.8f" % round((
+                                                                                                                 AMOUNT_TO_INVEST - AMOUNT_TO_INVEST * 0.0025) / marketTrend.buy,
+                                                                                                             8),
+                                                                                              "%.8f" % round(
+                                                                                                  marketTrend.buy,
+                                                                                                  8),
+                                                                                              int(time.time()))
+        print postData
 
-            print marketTrend
-
-            url = 'https://api.cryptsy.com/api'
-            postData = "method={}&marketid={}&ordertype=Buy&quantity={}&price={}&nonce={}".format("createorder",
-                                                                                                  marketTrend.id,
-                                                                                                  "%.8f" % round((
-                                                                                                                     AMOUNT_TO_INVEST - AMOUNT_TO_INVEST * 0.0025) / marketTrend.buy,
-                                                                                                                 8),
-                                                                                                  "%.8f" % round(
-                                                                                                      marketTrend.buy,
-                                                                                                      8),
-                                                                                                  int(time.time()))
-            print postData
-
-            message = bytes(postData).encode('utf-8')
-            secret = bytes(private).encode('utf-8')
-            signature = hmac.new(secret, message, digestmod=hashlib.sha512).hexdigest()
-            headers = {}
-            headers['Key'] = public
-            headers['Sign'] = signature
-            r = requests.post(url, data=postData, headers=headers)
-            responseBody = ast.literal_eval(r.content)
-            if int(responseBody['success']) != 1:
-                print "Error when invoking cryptsy authenticated API"
-            else:
-                btcBalance -= AMOUNT_TO_INVEST
+        message = bytes(postData).encode('utf-8')
+        secret = bytes(private).encode('utf-8')
+        signature = hmac.new(secret, message, digestmod=hashlib.sha512).hexdigest()
+        headers = {}
+        headers['Key'] = public
+        headers['Sign'] = signature
+        r = requests.post(url, data=postData, headers=headers)
+        responseBody = ast.literal_eval(r.content)
+        if int(responseBody['success']) != 1:
+            print "Error when invoking cryptsy authenticated API"
+        else:
+            btcBalance -= AMOUNT_TO_INVEST
 
 
 def main(argv):
@@ -212,8 +209,7 @@ def getAllActiveOrders(public, private):
 
     buyMarkets = []
     for order in orders:
-        if order['ordertype'] == 'Buy':
-            buyMarkets.append(order['marketid'])
+        buyMarkets.append(order['marketid'])
 
     return buyMarkets
 
