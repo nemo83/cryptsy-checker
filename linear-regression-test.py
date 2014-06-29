@@ -134,9 +134,9 @@ def main(argv):
 
     openBuyMarkets = getAllActiveOrders(public, private)
 
-    for balance in balanceList:
+    investBTCFlag = False
 
-        investBTCFlag = False
+    for balance in balanceList:
 
         if balance[0] == 'BTC':
             investBTCFlag = True
@@ -182,9 +182,9 @@ def main(argv):
             if int(responseBody['success']) != 1:
                 print "Error when invoking cryptsy authenticated API"
 
-        if investBTCFlag:
-            if balance[1] >= AMOUNT_TO_INVEST:
-                investBTC(public, private, balance[1], openBuyMarkets, cryptsyMarketData)
+    if investBTCFlag:
+        if balance[1] >= AMOUNT_TO_INVEST:
+            investBTC(public, private, balance[1], openBuyMarkets, cryptsyMarketData)
 
     print "Complete"
 
