@@ -116,8 +116,6 @@ def investBTC(public, private, btcBalance, openBuyMarkets, cryptsyMarketData):
             headers['Key'] = public
             headers['Sign'] = signature
             r = requests.post(url, data=postData, headers=headers)
-            print r.text
-            print r.content
             responseBody = ast.literal_eval(r.content)
             if int(responseBody['success']) != 1:
                 print "Error when invoking cryptsy authenticated API"
@@ -166,7 +164,6 @@ def main(argv):
                                                                                                    "%.8f" % round(sell,
                                                                                                                   8),
                                                                                                    int(time.time()))
-            print postData
 
             message = bytes(postData).encode('utf-8')
             secret = bytes(private).encode('utf-8')
@@ -175,8 +172,6 @@ def main(argv):
             headers['Key'] = public
             headers['Sign'] = signature
             r = requests.post(url, data=postData, headers=headers)
-            print r.text
-            print r.content
             responseBody = ast.literal_eval(r.content)
             if int(responseBody['success']) != 1:
                 print "Error when invoking cryptsy authenticated API"
