@@ -95,7 +95,7 @@ def investBTC(public, private, btcBalance, openBuyMarkets, cryptsyMarketData):
         url = 'https://api.cryptsy.com/api'
         quantity = (AMOUNT_TO_INVEST - AMOUNT_TO_INVEST * 0.0025) / marketTrend.buy
 
-        print "Sell {}, qty: {}, price: {}".format(marketName, quantity, marketTrend.buy)
+        print "Buy {}, qty: {}, price: {}".format(marketName, quantity, marketTrend.buy)
 
         postData = "method={}&marketid={}&ordertype=Buy&quantity={}&price={}&nonce={}".format("createorder",
                                                                                               marketTrend.id,
@@ -135,9 +135,11 @@ def main(argv):
     openBuyMarkets = getAllActiveOrders(public, private)
 
     for balance in balanceList:
+
+        investBTCFlag = False
+
         if balance[0] == 'BTC':
-            if balance[1] >= AMOUNT_TO_INVEST:
-                investBTC(public, private, balance[1], openBuyMarkets, cryptsyMarketData)
+            investBTCFlag = True
         else:
 
             marketName = "{}/BTC".format(balance[0])
@@ -179,6 +181,10 @@ def main(argv):
             responseBody = ast.literal_eval(r.content)
             if int(responseBody['success']) != 1:
                 print "Error when invoking cryptsy authenticated API"
+
+        if investBTCFlag:
+            if balance[1] >= AMOUNT_TO_INVEST:
+                investBTC(public, private, balance[1], openBuyMarkets, cryptsyMarketData)
 
     print "Complete"
 
