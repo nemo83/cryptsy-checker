@@ -1,4 +1,4 @@
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta, datetime, tzinfo
 import time
 import urllib2
 import getopt
@@ -32,7 +32,7 @@ def investBTC(public, private, btcBalance, openBuyMarkets, cryptsyMarketData):
 
     marketDetails = cryptsyMarketData['return']['markets']
     marketNames = [market for market in marketDetails]
-    client = MongoClient(host="192.168.1.29")
+    client = MongoClient()
     cryptsyDb = client.cryptsy_database
     marketsCollection = cryptsyDb.markets_collection
     # timeStart = datetime.date.fromordinal(datetime.date.today().toordinal())
@@ -132,7 +132,18 @@ def main(argv):
 
     cryptsyMarketData = loadCryptsyMarketData()
 
-    openBuyMarkets = getAllActiveOrders(public, private)
+    openBuyMarketsDetails = getAllActiveOrders(public, private)
+    openBuyMarkets = []
+
+    for openBuyMarketsDetail in openBuyMarketsDetails:
+        print "Market:{} Time: {}".format(openBuyMarketsDetail[0], openBuyMarketsDetail[2])
+        postponedOrder = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=6)
+        if openBuyMarketsDetail[3] == 'Buy' and postponedOrder < datetime.astimezone(tzinfo.edt).now():
+            print "Older than 6hrs!"
+        openBuyMarkets.append(openBuyMarketsDetail[0])
+
+    if True:
+        return
 
     investBTCFlag = False
 
@@ -224,7 +235,7 @@ def getAllActiveOrders(public, private):
 
     buyMarkets = []
     for order in orders:
-        buyMarkets.append(order['marketid'])
+        buyMarkets.append((order['marketid'], order['orderid'], order['created'], order['ordertype']))
 
     return buyMarkets
 
