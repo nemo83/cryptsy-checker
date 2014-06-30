@@ -137,13 +137,23 @@ def main(argv):
 
     for openBuyMarketsDetail in openBuyMarketsDetails:
         print "Market:{} Time: {}".format(openBuyMarketsDetail[0], openBuyMarketsDetail[2])
-        postponedOrder = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=6)
-        if openBuyMarketsDetail[3] == 'Buy' and postponedOrder < datetime.astimezone(tzinfo.edt).now():
-            print "Older than 6hrs!"
-        openBuyMarkets.append(openBuyMarketsDetail[0])
-
-    if True:
-        return
+        postponedOrder = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=4) + timedelta(hours=3)
+        if openBuyMarketsDetail[3] == 'Buy' and postponedOrder < datetime.now():
+            print "Older than 3hrs! {}".format(openBuyMarketsDetail)
+            url = 'https://api.cryptsy.com/api'
+            postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
+            message = bytes(postData).encode('utf-8')
+            secret = bytes(private).encode('utf-8')
+            signature = hmac.new(secret, message, digestmod=hashlib.sha512).hexdigest()
+            headers = {}
+            headers['Key'] = public
+            headers['Sign'] = signature
+            r = requests.post(url, data=postData, headers=headers)
+            responseBody = ast.literal_eval(r.content)
+            if int(responseBody['success']) != 1:
+                print "Error when invoking cryptsy authenticated API"
+        else:
+            openBuyMarkets.append(openBuyMarketsDetail[0])
 
     investBTCFlag = False
 
