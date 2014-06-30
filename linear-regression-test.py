@@ -95,7 +95,7 @@ def investBTC(public, private, btcBalance, openBuyMarkets, cryptsyMarketData):
         url = 'https://api.cryptsy.com/api'
         quantity = (AMOUNT_TO_INVEST - AMOUNT_TO_INVEST * 0.0025) / marketTrend.buy
 
-        print "Buy {}, qty: {}, price: {}".format(marketName, quantity, marketTrend.buy)
+        print "Buy {}, qty: {}, price: {}".format(marketTrend.marketName, quantity, marketTrend.buy)
 
         postData = "method={}&marketid={}&ordertype=Buy&quantity={}&price={}&nonce={}".format("createorder",
                                                                                               marketTrend.id,
