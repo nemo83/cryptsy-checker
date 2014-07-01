@@ -1,4 +1,4 @@
-from datetime import date, timedelta, datetime, tzinfo
+from datetime import date, timedelta, datetime
 import time
 import urllib2
 import getopt
@@ -6,14 +6,17 @@ import sys
 import hashlib
 import hmac
 import ast
+import simplejson
 
 import requests
-
 import numpy
-import simplejson
 from pymongo import MongoClient
 
+
 AMOUNT_TO_INVEST = 0.001
+
+public = ''
+private = ''
 
 
 def loadCryptsyMarketData():
@@ -27,7 +30,7 @@ def loadCryptsyMarketData():
     return cryptsyMarketData
 
 
-def investBTC(public, private, btcBalance, openBuyMarkets, cryptsyMarketData):
+def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
     epoch = datetime.utcfromtimestamp(0)
 
     marketDetails = cryptsyMarketData['return']['markets']
@@ -92,7 +95,6 @@ def investBTC(public, private, btcBalance, openBuyMarkets, cryptsyMarketData):
         if btcBalance < AMOUNT_TO_INVEST:
             break
 
-        url = 'https://api.cryptsy.com/api'
         quantity = (AMOUNT_TO_INVEST - AMOUNT_TO_INVEST * 0.0025) / marketTrend.buy
 
         print "Buy {}, qty: {}, price: {}".format(marketTrend.marketName, quantity, marketTrend.buy)
@@ -105,15 +107,9 @@ def investBTC(public, private, btcBalance, openBuyMarkets, cryptsyMarketData):
                                                                                                   marketTrend.buy, 8),
 
                                                                                               int(time.time()))
-        message = bytes(postData).encode('utf-8')
-        secret = bytes(private).encode('utf-8')
-        signature = hmac.new(secret, message, digestmod=hashlib.sha512).hexdigest()
-        headers = {}
-        headers['Key'] = public
-        headers['Sign'] = signature
-        r = requests.post(url, data=postData, headers=headers)
-        responseBody = ast.literal_eval(r.content)
-        if int(responseBody['success']) != 1:
+
+        responseBody, apiCallSucceded = makeAPIcall(postData)
+        if apiCallSucceded:
             print "Error when invoking cryptsy authenticated API"
         else:
             btcBalance -= AMOUNT_TO_INVEST
@@ -122,9 +118,9 @@ def investBTC(public, private, btcBalance, openBuyMarkets, cryptsyMarketData):
 def main(argv):
     print "Started."
 
-    public, private = getEnv(argv)
+    getEnv(argv)
 
-    balanceList = getInfo(public, private)
+    balanceList = getInfo()
 
     print "Current Balance:"
     for balance in balanceList:
@@ -132,26 +128,17 @@ def main(argv):
 
     cryptsyMarketData = loadCryptsyMarketData()
 
-    openBuyMarketsDetails = getAllActiveOrders(public, private)
+    openBuyMarketsDetails = getAllActiveOrders()
     openBuyMarkets = []
 
     for openBuyMarketsDetail in openBuyMarketsDetails:
         print "Market:{} Time: {}".format(openBuyMarketsDetail[0], openBuyMarketsDetail[2])
-        postponedOrder = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=4) + timedelta(hours=3)
+        postponedOrder = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(
+            hours=4) + timedelta(hours=3)
         if openBuyMarketsDetail[3] == 'Buy' and postponedOrder < datetime.now():
             print "Older than 3hrs! {}".format(openBuyMarketsDetail)
-            url = 'https://api.cryptsy.com/api'
             postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
-            message = bytes(postData).encode('utf-8')
-            secret = bytes(private).encode('utf-8')
-            signature = hmac.new(secret, message, digestmod=hashlib.sha512).hexdigest()
-            headers = {}
-            headers['Key'] = public
-            headers['Sign'] = signature
-            r = requests.post(url, data=postData, headers=headers)
-            responseBody = ast.literal_eval(r.content)
-            if int(responseBody['success']) != 1:
-                print "Error when invoking cryptsy authenticated API"
+            makeAPIcall(postData)
         else:
             openBuyMarkets.append(openBuyMarketsDetail[0])
 
@@ -180,7 +167,6 @@ def main(argv):
 
             print "Sell {}, qty: {}, price: {}".format(marketName, balance[1], sell)
 
-            url = 'https://api.cryptsy.com/api'
             postData = "method={}&marketid={}&ordertype=Sell&quantity={}&price={}&nonce={}".format("createorder",
                                                                                                    cryptsyMarketData[
                                                                                                        'return'][
@@ -192,60 +178,52 @@ def main(argv):
                                                                                                                   8),
                                                                                                    int(time.time()))
 
-            message = bytes(postData).encode('utf-8')
-            secret = bytes(private).encode('utf-8')
-            signature = hmac.new(secret, message, digestmod=hashlib.sha512).hexdigest()
-            headers = {}
-            headers['Key'] = public
-            headers['Sign'] = signature
-            r = requests.post(url, data=postData, headers=headers)
-            responseBody = ast.literal_eval(r.content)
-            if int(responseBody['success']) != 1:
-                print "Error when invoking cryptsy authenticated API"
+            makeAPIcall(postData)
 
     if investBTCFlag:
         if balance[1] >= AMOUNT_TO_INVEST:
-            investBTC(public, private, balance[1], openBuyMarkets, cryptsyMarketData)
+            investBTC(balance[1], openBuyMarkets, cryptsyMarketData)
 
     print "Complete"
 
 
-def getInfo(public, private):
+def makeAPIcall(requestParameters):
     url = 'https://api.cryptsy.com/api'
-    postData = "method={}&nonce={}".format("getinfo", int(time.time()))
-    message = bytes(postData).encode('utf-8')
+    message = bytes(requestParameters).encode('utf-8')
     secret = bytes(private).encode('utf-8')
     signature = hmac.new(secret, message, digestmod=hashlib.sha512).hexdigest()
     headers = {}
     headers['Key'] = public
     headers['Sign'] = signature
-    r = requests.post(url, data=postData, headers=headers)
+    r = requests.post(url, data=requestParameters, headers=headers)
     responseBody = ast.literal_eval(r.content)
-    if int(responseBody['success']) != 1:
-        print "Error when invoking cryptsy authenticated API"
-    balances = responseBody['return']['balances_available']
-    balanceList = filter(lambda x: x[1] > 0.0, [(balance, float(balances[balance])) for balance in balances])
-    return balanceList
+    apiCallSucceded = True if int(responseBody['success']) == 1 else False
+    if not apiCallSucceded:
+        print "CRYPTSY_AUTHENTICATED_API_ERROR [request: {}] [response: {}]".format(requestParameters, responseBody)
+    return responseBody['return'], apiCallSucceded
 
 
-def getAllActiveOrders(public, private):
-    url = 'https://api.cryptsy.com/api'
+def getInfo():
+    requestParameters = "method={}&nonce={}".format("getinfo", int(time.time()))
+    response, apiCallSucceded = makeAPIcall(requestParameters)
+    if apiCallSucceded:
+        balances = response['balances_available']
+        balanceList = filter(lambda x: x[1] > 0.0, [(balance, float(balances[balance])) for balance in balances])
+        return balanceList
+    else:
+        return []
+
+
+def getAllActiveOrders():
     postData = "method={}&nonce={}".format("allmyorders", int(time.time()))
-    message = bytes(postData).encode('utf-8')
-    secret = bytes(private).encode('utf-8')
-    signature = hmac.new(secret, message, digestmod=hashlib.sha512).hexdigest()
-    headers = {}
-    headers['Key'] = public
-    headers['Sign'] = signature
-    r = requests.post(url, data=postData, headers=headers)
-    responseBody = ast.literal_eval(r.content)
-    if int(responseBody['success']) != 1:
-        print "Error when invoking cryptsy authenticated API"
-    orders = responseBody['return']
+    orders, apiCallSucceded = makeAPIcall(postData)
 
-    buyMarkets = []
-    for order in orders:
-        buyMarkets.append((order['marketid'], order['orderid'], order['created'], order['ordertype']))
+    if apiCallSucceded:
+        buyMarkets = []
+        for order in orders:
+            buyMarkets.append((order['marketid'], order['orderid'], order['created'], order['ordertype']))
+    else:
+        []
 
     return buyMarkets
 
@@ -274,8 +252,8 @@ class MarketTrend:
 
 
 def getEnv(argv):
-    public = ''
-    private = ''
+    global public
+    global private
     try:
         opts, args = getopt.getopt(argv, "h", ["help", "public=", "private="])
     except getopt.GetoptError:
@@ -287,7 +265,6 @@ def getEnv(argv):
             public = arg
         elif opt == "--private":
             private = arg
-    return public, private
 
 
 if __name__ == "__main__":
