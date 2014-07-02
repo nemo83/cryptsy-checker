@@ -109,6 +109,20 @@ def main(argv):
 
     cryptsyClient = CryptsyPy(public, private)
 
+    ## Moved this before so that Older Sell Order will be cancelled and re-created with a new sell price
+    ## (this might lead to a loss but will possibly bring BTC back in circulation)
+    openBuyMarketsDetails = cryptsyClient.getAllActiveOrders()
+    openBuyMarkets = []
+    for openBuyMarketsDetail in openBuyMarketsDetails:
+        postponedOrder = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(
+            hours=4) + timedelta(hours=3)
+
+        if postponedOrder < datetime.now(): ## openBuyMarketsDetail[3] == 'Buy' and (removed from the if)
+            postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
+            cryptsyClient.makeAPIcall(postData)
+        else:
+            openBuyMarkets.append(openBuyMarketsDetail[0])
+
     balanceList = cryptsyClient.getInfo()
 
     print "Current Balance:"
@@ -116,18 +130,6 @@ def main(argv):
         print "{}, {}".format(balance[0], balance[1])
 
     cryptsyMarketData = loadCryptsyMarketData()
-
-    openBuyMarketsDetails = cryptsyClient.getAllActiveOrders()
-    openBuyMarkets = []
-
-    for openBuyMarketsDetail in openBuyMarketsDetails:
-        postponedOrder = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(
-            hours=4) + timedelta(hours=3)
-        if openBuyMarketsDetail[3] == 'Buy' and postponedOrder < datetime.now():
-            postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
-            cryptsyClient.makeAPIcall(postData)
-        else:
-            openBuyMarkets.append(openBuyMarketsDetail[0])
 
     investBTCFlag = False
 
