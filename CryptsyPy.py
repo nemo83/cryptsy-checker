@@ -3,6 +3,7 @@ import hmac
 import ast
 import hashlib
 import time
+from datetime import timedelta, datetime
 
 import requests
 
@@ -53,6 +54,7 @@ class CryptsyPy:
 
     def getAllActiveOrders(self):
         postData = "method={}&nonce={}".format("allmyorders", int(time.time()))
+
         orders, apiCallSucceded = self.makeAPIcall(postData)
 
         if apiCallSucceded:
@@ -63,3 +65,49 @@ class CryptsyPy:
             []
 
         return buyMarkets
+
+
+    def getAllTradesInTheLast(self, numDays):
+        enddate = datetime.now()
+        startdate = enddate - timedelta(days=numDays)
+
+        postData = "method={}&startdate={}&endate={}&nonce={}".format("allmytrades",
+                                                                      startdate.strftime("%Y-%m-%d"),
+                                                                      enddate.strftime("%Y-%m-%d"),
+                                                                      int(time.time()))
+        trades, apiCallSucceded = self.makeAPIcall(postData)
+
+        tradeStats = {}
+        if apiCallSucceded:
+            for trade in trades:
+                marketid = trade['marketid']
+                tradetype = trade['tradetype']
+                total = trade['total']
+
+                if marketid not in tradeStats:
+                    tradeStats[marketid] = {}
+                    tradeStats[marketid]['NumTrades'] = 0.0
+                    tradeStats[marketid]['Buy'] = 0.0
+                    tradeStats[marketid]['Sell'] = 0.0
+
+                tradeStats[marketid]['NumTrades'] += 1
+                tradeStats[marketid][tradetype] += float(total)
+
+        return tradeStats
+
+    def getBestPerformingMarketsInTheLast(self, numBestMarkets, numDays):
+        tradeStats = self.getAllTradesInTheLast(numDays)
+        filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Buy'], tradeStats)
+        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
+                                  reverse=True)
+
+        # for tradeStat in sortedTradeStats:
+        #     numTrades = tradeStats[tradeStat]['NumTrades']
+        #     buyTotal = tradeStats[tradeStat]['Buy']
+        #     sellTotal = tradeStats[tradeStat]['Sell']
+        #     print "MarketId: {}, NumTrades: {}, BuyTotal {}, SellTotal{}, Diff: {}".format(tradeStat, numTrades,
+        #                                                                                    buyTotal,
+        #                                                                                    sellTotal,
+        #                                                                                    sellTotal - buyTotal)
+
+        print sortedTradeStats[:numBestMarkets]

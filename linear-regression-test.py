@@ -16,7 +16,7 @@ public = ''
 private = ''
 
 
-def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
+def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketData):
     epoch = datetime.utcfromtimestamp(0)
 
     marketDetails = cryptsyMarketData['return']['markets']
@@ -25,13 +25,12 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
     cryptsyDb = client.cryptsy_database
     marketsCollection = cryptsyDb.markets_collection
     timeStart = date.today() - timedelta(days=1)
-    filteredMarketNames = filter(lambda x: 'BTC' in x, marketNames)
+    btcMarketNames = filter(lambda x: 'BTC' in x, marketNames)
     marketTrends = []
 
-    for marketName in filteredMarketNames:
+    filteredBtcMarkets = filter(lambda x: marketDetails[x]['marketid'] not in openBuyMarkets, btcMarketNames)
 
-        if marketDetails[marketName]['marketid'] in openBuyMarkets:
-            continue
+    for marketName in filteredBtcMarkets:
 
         cryptoCurrencyDataSamples = marketsCollection.find(
             {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d")}})
@@ -76,7 +75,13 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 4 * 0.0025 * x.avg,
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
-    for marketTrend in sortedMarketTrends:
+    firstTenSorted = filter(lambda x: x.id in bestPerformingMarkets, sortedMarketTrends[:10])
+    otherMarketsSorted = filter(lambda x: x.id not in bestPerformingMarkets, sortedMarketTrends[:10])
+
+    orderedMarketsToInvestOn = firstTenSorted + otherMarketsSorted
+
+    for marketTrend in orderedMarketsToInvestOn:
+
         if btcBalance < AMOUNT_TO_INVEST:
             break
 
@@ -84,13 +89,12 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
 
         print "Buy {}, qty: {}, price: {}".format(marketTrend.marketName, quantity, marketTrend.buy)
 
+        quantityToBuy = "%.8f" % round(quantity, 8)
+        buyPrice = "%.8f" % round(marketTrend.buy, 8)
         postData = "method={}&marketid={}&ordertype=Buy&quantity={}&price={}&nonce={}".format("createorder",
                                                                                               marketTrend.id,
-                                                                                              "%.8f" % round(quantity,
-                                                                                                             8),
-                                                                                              "%.8f" % round(
-                                                                                                  marketTrend.buy, 8),
-
+                                                                                              quantityToBuy,
+                                                                                              buyPrice,
                                                                                               int(time.time()))
 
         responseBody, apiCallSucceded = cryptsyClient.makeAPIcall(postData)
@@ -108,6 +112,8 @@ def main(argv):
     global cryptsyClient
 
     cryptsyClient = CryptsyPy(public, private)
+
+    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(3, 2)
 
     ## Moved this before so that Older Sell Order will be cancelled and re-created with a new sell price
     ## (this might lead to a loss but will possibly bring BTC back in circulation)
@@ -175,7 +181,7 @@ def main(argv):
 
     if investBTCFlag:
         if btcBalance >= AMOUNT_TO_INVEST:
-            investBTC(balance[1], openBuyMarkets, cryptsyMarketData)
+            investBTC(balance[1], bestPerformingMarkets, openBuyMarkets, cryptsyMarketData)
 
     print "Complete"
 
