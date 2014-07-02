@@ -21,7 +21,7 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
 
     marketDetails = cryptsyMarketData['return']['markets']
     marketNames = [market for market in marketDetails]
-    client = MongoClient()
+    client = MongoClient(host="192.168.1.29")
     cryptsyDb = client.cryptsy_database
     marketsCollection = cryptsyDb.markets_collection
     timeStart = date.today() - timedelta(days=1)
@@ -99,8 +99,6 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
 
         responseBody, apiCallSucceded = cryptsyClient.makeAPIcall(postData)
         if apiCallSucceded:
-            print "Error when invoking cryptsy authenticated API"
-        else:
             btcBalance -= AMOUNT_TO_INVEST
 
 
@@ -115,15 +113,15 @@ def main(argv):
 
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(3, 2)
 
-    ## Moved this before so that Older Sell Order will be cancelled and re-created with a new sell price
+    # # Moved this before so that Older Sell Order will be cancelled and re-created with a new sell price
     ## (this might lead to a loss but will possibly bring BTC back in circulation)
     openBuyMarketsDetails = cryptsyClient.getAllActiveOrders()
     openBuyMarkets = []
     for openBuyMarketsDetail in openBuyMarketsDetails:
         postponedOrder = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(
-            hours=4) + timedelta(hours=3)
+            hours=4) + timedelta(hours=2)
 
-        if postponedOrder < datetime.now(): ## openBuyMarketsDetail[3] == 'Buy' and (removed from the if)
+        if postponedOrder < datetime.now():  ## openBuyMarketsDetail[3] == 'Buy' and (removed from the if)
             postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
             cryptsyClient.makeAPIcall(postData)
         else:
@@ -176,12 +174,11 @@ def main(argv):
                                                                                                    "%.8f" % round(sell,
                                                                                                                   8),
                                                                                                    int(time.time()))
-
             cryptsyClient.makeAPIcall(postData)
 
     if investBTCFlag:
         if btcBalance >= AMOUNT_TO_INVEST:
-            investBTC(balance[1], bestPerformingMarkets, openBuyMarkets, cryptsyMarketData)
+            investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketData)
 
     print "Complete"
 

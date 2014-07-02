@@ -39,7 +39,10 @@ class CryptsyPy:
         apiCallSucceded = True if int(responseBody['success']) == 1 else False
         if not apiCallSucceded:
             print "CRYPTSY_AUTHENTICATED_API_ERROR [request: {}] [response: {}]".format(requestParameters, responseBody)
-        return responseBody['return'], apiCallSucceded
+        if 'return' in responseBody:
+            return responseBody['return'], apiCallSucceded
+        else:
+            return None, apiCallSucceded
 
     def getInfo(self):
         requestParameters = "method={}&nonce={}".format("getinfo", int(time.time()))
@@ -110,4 +113,4 @@ class CryptsyPy:
         #                                                                                    sellTotal,
         #                                                                                    sellTotal - buyTotal)
 
-        print sortedTradeStats[:numBestMarkets]
+        return sortedTradeStats[:numBestMarkets]
