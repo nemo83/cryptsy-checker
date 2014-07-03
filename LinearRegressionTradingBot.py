@@ -12,40 +12,38 @@ from CryptsyPy import CryptsyPy, loadCryptsyMarketData
 AMOUNT_TO_INVEST = 0.001
 
 cryptsyClient = None
+mongoClient = None
+mongoCryptsyDb = None
+mongoMarketsCollection = None
+
 public = ''
 private = ''
 epoch = datetime.utcfromtimestamp(0)
 
 
 def getNormalizedTimesAndPrices(tradeData):
+    def normalize(value, min, scalingFactor):
+        return (value - min) / scalingFactor if scalingFactor != 0 else (value - min)
+
+    def normalizeValues(values):
+        minValue = min(values)
+        scalingFactor = max(values) - minValue
+        normalizedValues = [normalize(value, minValue, scalingFactor) for value in values]
+        return normalizedValues
+
     lastTradeTimes = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
                       for
                       tradeDataSample in
                       tradeData]
 
-    minSeconds = min(lastTradeTimes)
-    secondNormalization = max(lastTradeTimes) - minSeconds
-    normalizedLastTradeTimes = [
-        (lastTradeTime - minSeconds) / secondNormalization if secondNormalization != 0 else (
-            lastTradeTime - minSeconds) for lastTradeTime in lastTradeTimes]
-
     lastTradePrices = [float(tradeDataSample[1]) * 100000000 for tradeDataSample in tradeData]
 
-    minTradingPrice = min(lastTradePrices)
-    priceNormalization = max(lastTradePrices) - minTradingPrice
-    normalizedLastTradePrices = [
-        (lastTradePrice - minTradingPrice) / priceNormalization if priceNormalization != 0 else (
-            lastTradePrice - minTradingPrice) for lastTradePrice in
-        lastTradePrices]
-    return normalizedLastTradePrices, normalizedLastTradeTimes
+    return normalizeValues(lastTradePrices), normalizeValues(lastTradeTimes)
 
 
 def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketData):
     marketDetails = cryptsyMarketData['return']['markets']
     marketNames = [market for market in marketDetails]
-    client = MongoClient(host="192.168.1.29")
-    cryptsyDb = client.cryptsy_database
-    marketsCollection = cryptsyDb.markets_collection
     timeStart = date.today() - timedelta(days=1)
     btcMarketNames = filter(lambda x: 'BTC' in x, marketNames)
     marketTrends = []
@@ -54,7 +52,7 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
 
     for marketName in filteredBtcMarkets:
 
-        cryptoCurrencyDataSamples = marketsCollection.find(
+        cryptoCurrencyDataSamples = mongoMarketsCollection.find(
             {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d")}})
 
         tradeData = [(cryptoCurrencySample['lasttradetime'], cryptoCurrencySample['lasttradeprice']) for
@@ -69,11 +67,7 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
 
         currencyTrend = numpy.polyfit(normalizedLastTradeTimes, normalizedLastTradePrices, 1)
 
-        cryptoCurrencyDataSamples = marketsCollection.find(
-            {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d")}})
-
-        prices = [float(cryptoCurrencyDataSample['lasttradeprice']) for cryptoCurrencyDataSample in
-                  cryptoCurrencyDataSamples]
+        prices = [uniqueTradeDataSample[1] for uniqueTradeDataSample in uniqueTradeData]
 
         marketTrend = MarketTrend(marketName=marketName, id=marketDetails[marketName]['marketid'], m=currencyTrend[0],
                                   avg=numpy.average(prices),
@@ -85,6 +79,7 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
     firstTenSorted = filter(lambda x: x.id in bestPerformingMarkets, sortedMarketTrends[:25])
+
     otherMarketsSorted = filter(lambda x: x.id not in bestPerformingMarkets, sortedMarketTrends)
 
     orderedMarketsToInvestOn = firstTenSorted + otherMarketsSorted
@@ -117,8 +112,12 @@ def main(argv):
     getEnv(argv)
 
     global cryptsyClient
-
     cryptsyClient = CryptsyPy(public, private)
+
+    global mongoClient, mongoCryptsyDb, mongoMarketsCollection
+    mongoClient = MongoClient(host="192.168.1.29")
+    mongoCryptsyDb = mongoClient.cryptsy_database
+    mongoMarketsCollection = mongoClient.markets_collection
 
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(3, 2)
 
@@ -160,12 +159,9 @@ def main(argv):
 
             marketName = "{}/BTC".format(balance[0])
 
-            client = MongoClient(host="192.168.1.29")
-            cryptsyDb = client.cryptsy_database
-            marketsCollection = cryptsyDb.markets_collection
             timeStart = date.today() - timedelta(days=1)
 
-            cryptoCurrencyDataSamples = marketsCollection.find(
+            cryptoCurrencyDataSamples = mongoMarketsCollection.find(
                 {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d")}})
 
             prices = [float(cryptoCurrencyDataSample['lasttradeprice']) for cryptoCurrencyDataSample in
