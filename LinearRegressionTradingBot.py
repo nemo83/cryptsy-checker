@@ -67,6 +67,8 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
 
         currencyTrend = numpy.polyfit(normalizedLastTradeTimes, normalizedLastTradePrices, 1)
 
+        print list(uniqueTradeData)
+
         prices = [uniqueTradeDataSample[1] for uniqueTradeDataSample in list(uniqueTradeData)]
 
         marketTrend = MarketTrend(marketName=marketName, id=marketDetails[marketName]['marketid'], m=currencyTrend[0],
