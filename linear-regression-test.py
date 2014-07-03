@@ -47,8 +47,9 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
                           tradeData]
         minSeconds = min(lastTradeTimes)
         secondNormalization = max(lastTradeTimes) - minSeconds
-        normalizedLastTradeTimes = [(lastTradeTime - minSeconds) / secondNormalization for lastTradeTime in
-                                    lastTradeTimes]
+        normalizedLastTradeTimes = [
+            (lastTradeTime - minSeconds) / secondNormalization if secondNormalization != 0 else (
+                lastTradeTime - minSeconds) for lastTradeTime in lastTradeTimes]
 
         lastTradePrices = [float(tradeDataSample[1]) * 100000000 for tradeDataSample in tradeData]
         minTradingPrice = min(lastTradePrices)
@@ -114,16 +115,18 @@ def main(argv):
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(3, 2)
 
     # # Moved this before so that Older Sell Order will be cancelled and re-created with a new sell price
-    ## (this might lead to a loss but will possibly bring BTC back in circulation)
+    # # (this might lead to a loss but will possibly bring BTC back in circulation)
     openBuyMarketsDetails = cryptsyClient.getAllActiveOrders()
     openBuyMarkets = []
     for openBuyMarketsDetail in openBuyMarketsDetails:
-        postponedOrder = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(
-            hours=4) + timedelta(hours=2)
-
-        if postponedOrder < datetime.now():  ## openBuyMarketsDetail[3] == 'Buy' and (removed from the if)
+        openMarketNormalized = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=4)
+        if openBuyMarketsDetail[3] == 'Buy' and openMarketNormalized + timedelta(hours=1) < datetime.now():
             postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
             cryptsyClient.makeAPIcall(postData)
+        elif openBuyMarketsDetail[3] == 'Sell' and openMarketNormalized + timedelta(hours=3) < datetime.now():
+            postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
+            cryptsyClient.makeAPIcall(postData)
+            openBuyMarkets.append(openBuyMarketsDetail[0])
         else:
             openBuyMarkets.append(openBuyMarketsDetail[0])
 
