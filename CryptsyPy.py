@@ -4,10 +4,9 @@ import ast
 import hashlib
 import time
 from datetime import timedelta, datetime
+import simplejson
 
 import requests
-
-import simplejson
 
 
 def loadCryptsyMarketData():
@@ -105,12 +104,36 @@ class CryptsyPy:
                                   reverse=True)
 
         # for tradeStat in sortedTradeStats:
-        #     numTrades = tradeStats[tradeStat]['NumTrades']
-        #     buyTotal = tradeStats[tradeStat]['Buy']
-        #     sellTotal = tradeStats[tradeStat]['Sell']
-        #     print "MarketId: {}, NumTrades: {}, BuyTotal {}, SellTotal{}, Diff: {}".format(tradeStat, numTrades,
-        #                                                                                    buyTotal,
-        #                                                                                    sellTotal,
-        #                                                                                    sellTotal - buyTotal)
+        # numTrades = tradeStats[tradeStat]['NumTrades']
+        # buyTotal = tradeStats[tradeStat]['Buy']
+        # sellTotal = tradeStats[tradeStat]['Sell']
+        # print "MarketId: {}, NumTrades: {}, BuyTotal {}, SellTotal{}, Diff: {}".format(tradeStat, numTrades,
+        # buyTotal,
+        # sellTotal,
+        # sellTotal - buyTotal)
 
         return sortedTradeStats[:numBestMarkets]
+
+    def toEightDigit(self, value):
+        return "%.8f" % round(value, 8)
+
+
+    def placeSellOrder(self, marketId, quantity, price):
+        postData = "method={}&marketid={}&ordertype=Sell&quantity={}&price={}&nonce={}".format("createorder",
+                                                                                               marketId,
+                                                                                               self.toEightDigit(
+                                                                                                   quantity),
+                                                                                               self.toEightDigit(
+                                                                                                   price),
+                                                                                               int(time.time()))
+        self.makeAPIcall(postData)
+
+    def placeBuyOrder(self, marketId, quantity, price):
+        postData = "method={}&marketid={}&ordertype=Buy&quantity={}&price={}&nonce={}".format("createorder",
+                                                                                              marketId,
+                                                                                              self.toEightDigit(
+                                                                                                  quantity),
+                                                                                              self.toEightDigit(
+                                                                                                  price),
+                                                                                              int(time.time()))
+        return self.makeAPIcall(postData)

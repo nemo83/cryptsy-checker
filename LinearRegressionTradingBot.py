@@ -69,7 +69,8 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
 
         prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
 
-        marketTrend = MarketTrend(marketName=marketName, id=marketDetails[marketName]['marketid'], m=currencyTrend[0],
+        marketTrend = MarketTrend(marketName=marketName, marketId=marketDetails[marketName]['marketid'],
+                                  m=currencyTrend[0],
                                   avg=numpy.average(prices),
                                   std=numpy.std(prices))
 
@@ -91,17 +92,7 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
 
         quantity = (AMOUNT_TO_INVEST - AMOUNT_TO_INVEST * 0.0025) / marketTrend.buy
 
-        print "Buy {}, qty: {}, price: {}".format(marketTrend.marketName, quantity, marketTrend.buy)
-
-        quantityToBuy = "%.8f" % round(quantity, 8)
-        buyPrice = "%.8f" % round(marketTrend.buy, 8)
-        postData = "method={}&marketid={}&ordertype=Buy&quantity={}&price={}&nonce={}".format("createorder",
-                                                                                              marketTrend.id,
-                                                                                              quantityToBuy,
-                                                                                              buyPrice,
-                                                                                              int(time.time()))
-
-        responseBody, apiCallSucceded = cryptsyClient.makeAPIcall(postData)
+        responseBody, apiCallSucceded = cryptsyClient.placeSellOrder(marketTrend.id, quantity, marketTrend.buy)
         if apiCallSucceded:
             btcBalance -= AMOUNT_TO_INVEST
 
@@ -119,18 +110,16 @@ def main(argv):
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
-    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(3, 2)
+    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(1, 1)
 
-    # # Moved this before so that Older Sell Order will be cancelled and re-created with a new sell price
-    # # (this might lead to a loss but will possibly bring BTC back in circulation)
     openBuyMarketsDetails = cryptsyClient.getAllActiveOrders()
     openBuyMarkets = []
     for openBuyMarketsDetail in openBuyMarketsDetails:
         openMarketNormalized = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=4)
-        if openBuyMarketsDetail[3] == 'Buy' and openMarketNormalized + timedelta(hours=1) < datetime.now():
+        if openBuyMarketsDetail[3] == 'Buy' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
             postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
             cryptsyClient.makeAPIcall(postData)
-        elif openBuyMarketsDetail[3] == 'Sell' and openMarketNormalized + timedelta(hours=3) < datetime.now():
+        elif openBuyMarketsDetail[3] == 'Sell' and (openMarketNormalized + timedelta(hours=3)) < datetime.now():
             postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
             cryptsyClient.makeAPIcall(postData)
             openBuyMarkets.append(openBuyMarketsDetail[0])
@@ -169,19 +158,9 @@ def main(argv):
 
             sell = numpy.average(prices) + numpy.std(prices)
 
-            print "Sell {}, qty: {}, price: {}".format(marketName, balance[1], sell)
-
-            postData = "method={}&marketid={}&ordertype=Sell&quantity={}&price={}&nonce={}".format("createorder",
-                                                                                                   cryptsyMarketData[
-                                                                                                       'return'][
-                                                                                                       'markets'][
-                                                                                                       marketName][
-                                                                                                       'marketid'],
-                                                                                                   balance[1],
-                                                                                                   "%.8f" % round(sell,
-                                                                                                                  8),
-                                                                                                   int(time.time()))
-            cryptsyClient.makeAPIcall(postData)
+            marketId = cryptsyMarketData['return']['markets'][marketName]['marketid']
+            quantity = balance[1]
+            cryptsyClient.placeSellOrder(marketId, quantity, sell)
 
     if investBTCFlag:
         if btcBalance >= AMOUNT_TO_INVEST:
@@ -191,20 +170,19 @@ def main(argv):
 
 
 class MarketTrend:
-    def __init__(self, marketName, id, m, avg, std):
+    def __init__(self, marketName, marketId, m, avg, std):
         self.marketName = marketName
-        self.id = id
+        self.marketId = marketId
         self.m = m
         self.avg = avg
         self.std = std
-        # self.rate = abs((float(average + std) - float(average - std)) / float(average - std) * 100)
         self.buy = avg - std
         self.sell = avg + std
 
     def __str__(self):
         return "marketName: {}, id: {}, m: {}, avg: {}, std: {}, buy: {}, sell: {}".format(
             self.marketName,
-            self.id,
+            self.marketId,
             self.m,
             self.avg,
             self.std,
