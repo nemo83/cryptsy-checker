@@ -117,7 +117,7 @@ def main(argv):
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection
     mongoClient = MongoClient(host="192.168.1.29")
     mongoCryptsyDb = mongoClient.cryptsy_database
-    mongoMarketsCollection = mongoClient.markets_collection
+    mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(3, 2)
 
