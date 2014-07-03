@@ -14,11 +14,33 @@ AMOUNT_TO_INVEST = 0.001
 cryptsyClient = None
 public = ''
 private = ''
+epoch = datetime.utcfromtimestamp(0)
+
+
+def getNormalizedTimesAndPrices(tradeData):
+    lastTradeTimes = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
+                      for
+                      tradeDataSample in
+                      tradeData]
+
+    minSeconds = min(lastTradeTimes)
+    secondNormalization = max(lastTradeTimes) - minSeconds
+    normalizedLastTradeTimes = [
+        (lastTradeTime - minSeconds) / secondNormalization if secondNormalization != 0 else (
+            lastTradeTime - minSeconds) for lastTradeTime in lastTradeTimes]
+
+    lastTradePrices = [float(tradeDataSample[1]) * 100000000 for tradeDataSample in tradeData]
+
+    minTradingPrice = min(lastTradePrices)
+    priceNormalization = max(lastTradePrices) - minTradingPrice
+    normalizedLastTradePrices = [
+        (lastTradePrice - minTradingPrice) / priceNormalization if priceNormalization != 0 else (
+            lastTradePrice - minTradingPrice) for lastTradePrice in
+        lastTradePrices]
+    return normalizedLastTradePrices, normalizedLastTradeTimes
 
 
 def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketData):
-    epoch = datetime.utcfromtimestamp(0)
-
     marketDetails = cryptsyMarketData['return']['markets']
     marketNames = [market for market in marketDetails]
     client = MongoClient(host="192.168.1.29")
@@ -38,26 +60,12 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
         tradeData = [(cryptoCurrencySample['lasttradetime'], cryptoCurrencySample['lasttradeprice']) for
                      cryptoCurrencySample in cryptoCurrencyDataSamples]
 
-        if len(tradeData) == 0:
+        uniqueTradeData = set(tradeData)
+
+        if len(uniqueTradeData) < 100:
             continue
 
-        lastTradeTimes = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
-                          for
-                          tradeDataSample in
-                          tradeData]
-        minSeconds = min(lastTradeTimes)
-        secondNormalization = max(lastTradeTimes) - minSeconds
-        normalizedLastTradeTimes = [
-            (lastTradeTime - minSeconds) / secondNormalization if secondNormalization != 0 else (
-                lastTradeTime - minSeconds) for lastTradeTime in lastTradeTimes]
-
-        lastTradePrices = [float(tradeDataSample[1]) * 100000000 for tradeDataSample in tradeData]
-        minTradingPrice = min(lastTradePrices)
-        priceNormalization = max(lastTradePrices) - minTradingPrice
-        normalizedLastTradePrices = [
-            (lastTradePrice - minTradingPrice) / priceNormalization if priceNormalization != 0 else (
-                lastTradePrice - minTradingPrice) for lastTradePrice in
-            lastTradePrices]
+        normalizedLastTradePrices, normalizedLastTradeTimes = getNormalizedTimesAndPrices(set(uniqueTradeData))
 
         currencyTrend = numpy.polyfit(normalizedLastTradeTimes, normalizedLastTradePrices, 1)
 
