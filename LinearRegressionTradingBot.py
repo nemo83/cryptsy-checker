@@ -60,7 +60,7 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
 
         uniqueTradeData = set(tradeData)
 
-        if len(uniqueTradeData) < 100:
+        if len(uniqueTradeData) < 200:
             continue
 
         normalizedLastTradePrices, normalizedLastTradeTimes = getNormalizedTimesAndPrices(set(uniqueTradeData))
