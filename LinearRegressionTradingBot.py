@@ -213,7 +213,6 @@ def getEnv(argv):
     global public
     global private
     global userMarketIds
-    print userMarketIds
     try:
         opts, args = getopt.getopt(argv, "h", ["help", "public=", "private=", "marketIds="])
     except getopt.GetoptError:
