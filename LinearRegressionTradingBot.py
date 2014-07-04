@@ -89,10 +89,11 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(1, 1)
+
     worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsInTheLast(5, 2)
 
-    suggestedMarkets = (userMarketIds if userMarketIds is not None else []) + filter(lambda x: x in marketIds,
-                                                                                     bestPerformingMarkets)
+    suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
+                                                                                bestPerformingMarkets)
 
     otherMarketsSorted = filter(
         lambda x: x.marketId not in suggestedMarkets and x.marketId not in worstPerformingMarkets,
@@ -129,7 +130,8 @@ def main(argv):
     cryptsyClient = CryptsyPy(public, private)
 
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection
-    mongoClient = MongoClient(host="192.168.1.29")
+    # mongoClient = MongoClient(host="192.168.1.29")
+    mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
