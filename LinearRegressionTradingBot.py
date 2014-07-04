@@ -9,7 +9,7 @@ from pymongo import MongoClient
 from CryptsyPy import CryptsyPy, loadCryptsyMarketData
 
 
-AMOUNT_TO_INVEST = 0.001
+AMOUNT_TO_INVEST = 0.0005
 
 cryptsyClient = None
 mongoClient = None
