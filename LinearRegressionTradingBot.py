@@ -92,7 +92,7 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
 
         quantity = (AMOUNT_TO_INVEST - AMOUNT_TO_INVEST * 0.0025) / marketTrend.buy
 
-        responseBody, apiCallSucceded = cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, marketTrend.buy)
+        responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, marketTrend.buy)
         if apiCallSucceded:
             btcBalance -= AMOUNT_TO_INVEST
 
