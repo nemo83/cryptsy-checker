@@ -129,7 +129,7 @@ def main(argv):
     openBuyMarketsDetails = cryptsyClient.getAllActiveOrders()
     openBuyMarkets = []
     for openBuyMarketsDetail in openBuyMarketsDetails:
-        openMarketNormalized = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=4)
+        openMarketNormalized = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=5)
         if openBuyMarketsDetail[3] == 'Buy' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
             postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
             cryptsyClient.makeAPIcall(postData)
