@@ -100,7 +100,14 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
 
     orderedMarketsToInvestOn = suggestedMarkets + otherMarketsSorted
 
-    for marketTrend in orderedMarketsToInvestOn:
+    marketTrendsToInvestOn = []
+
+    for marketId in orderedMarketsToInvestOn:
+        for marketTrend in orderedMarketsToInvestOn:
+            if marketTrend.marketId == marketId:
+                marketTrendsToInvestOn.append(marketTrend)
+
+    for marketTrend in marketTrendsToInvestOn:
 
         if btcBalance < AMOUNT_TO_INVEST:
             break
