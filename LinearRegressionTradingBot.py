@@ -79,9 +79,9 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 4 * 0.0025 * x.avg,
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
-    firstTenSorted = filter(lambda x: x.id in bestPerformingMarkets, sortedMarketTrends[:25])
+    firstTenSorted = filter(lambda x: x.marketId in bestPerformingMarkets, sortedMarketTrends[:25])
 
-    otherMarketsSorted = filter(lambda x: x.id not in bestPerformingMarkets, sortedMarketTrends)
+    otherMarketsSorted = filter(lambda x: x.marketId not in bestPerformingMarkets, sortedMarketTrends)
 
     orderedMarketsToInvestOn = firstTenSorted + otherMarketsSorted
 
@@ -92,7 +92,7 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
 
         quantity = (AMOUNT_TO_INVEST - AMOUNT_TO_INVEST * 0.0025) / marketTrend.buy
 
-        responseBody, apiCallSucceded = cryptsyClient.placeSellOrder(marketTrend.id, quantity, marketTrend.buy)
+        responseBody, apiCallSucceded = cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, marketTrend.buy)
         if apiCallSucceded:
             btcBalance -= AMOUNT_TO_INVEST
 
