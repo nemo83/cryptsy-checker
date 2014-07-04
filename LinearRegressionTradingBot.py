@@ -95,7 +95,7 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
                                                                                      bestPerformingMarkets)
 
     otherMarketsSorted = filter(
-        lambda x: x.marketId not in bestPerformingMarkets and x.marketId not in worstPerformingMarkets,
+        lambda x: x.marketId not in suggestedMarkets and x.marketId not in worstPerformingMarkets,
         sortedMarketTrends)
 
     orderedMarketsToInvestOn = suggestedMarkets + otherMarketsSorted
@@ -103,7 +103,7 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
     marketTrendsToInvestOn = []
 
     for marketId in orderedMarketsToInvestOn:
-        for marketTrend in orderedMarketsToInvestOn:
+        for marketTrend in marketTrends:
             if marketTrend.marketId == marketId:
                 marketTrendsToInvestOn.append(marketTrend)
 
