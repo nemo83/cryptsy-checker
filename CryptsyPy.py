@@ -123,6 +123,7 @@ class CryptsyPy:
                                                                                                self.toEightDigit(
                                                                                                    price),
                                                                                                int(time.time()))
+        print postData
         self.makeAPIcall(postData)
 
     def placeBuyOrder(self, marketId, quantity, price):
@@ -133,4 +134,5 @@ class CryptsyPy:
                                                                                               self.toEightDigit(
                                                                                                   price),
                                                                                               int(time.time()))
+        print postData
         return self.makeAPIcall(postData)

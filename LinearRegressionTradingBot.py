@@ -18,6 +18,7 @@ mongoMarketsCollection = None
 
 public = ''
 private = ''
+userMarketIds = None
 epoch = datetime.utcfromtimestamp(0)
 
 
@@ -50,7 +51,9 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
     marketNames = [market for market in marketDetails]
     timeStart = date.today() - timedelta(days=1)
     btcMarketNames = filter(lambda x: 'BTC' in x, marketNames)
+
     marketTrends = []
+    marketIds = []
 
     filteredBtcMarkets = filter(lambda x: marketDetails[x]['marketid'] not in openBuyMarkets, btcMarketNames)
 
@@ -75,10 +78,12 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
 
         marketTrend = MarketTrend(marketName=marketName, marketId=marketDetails[marketName]['marketid'],
                                   m=currencyTrend[0],
+                                  n=currencyTrend[1],
                                   avg=numpy.average(prices),
                                   std=numpy.std(prices))
 
         marketTrends.append(marketTrend)
+        marketIds.append(marketDetails[marketName]['marketid'])
 
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 4 * 0.0025 * x.avg,
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
@@ -86,13 +91,14 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(1, 1)
     worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsInTheLast(5, 2)
 
-    firstTenSorted = filter(lambda x: x.marketId in bestPerformingMarkets, sortedMarketTrends[:25])
+    suggestedMarkets = (userMarketIds if userMarketIds is not None else []) + filter(lambda x: x in marketIds,
+                                                                                     bestPerformingMarkets)
 
     otherMarketsSorted = filter(
         lambda x: x.marketId not in bestPerformingMarkets and x.marketId not in worstPerformingMarkets,
         sortedMarketTrends)
 
-    orderedMarketsToInvestOn = firstTenSorted + otherMarketsSorted
+    orderedMarketsToInvestOn = suggestedMarkets + otherMarketsSorted
 
     for marketTrend in orderedMarketsToInvestOn:
 
@@ -180,20 +186,22 @@ def main(argv):
 
 
 class MarketTrend:
-    def __init__(self, marketName, marketId, m, avg, std):
+    def __init__(self, marketName, marketId, m, n, avg, std):
         self.marketName = marketName
         self.marketId = marketId
         self.m = m
+        self.n = n
         self.avg = avg
         self.std = std
         self.buy = avg - std
         self.sell = avg + std
 
     def __str__(self):
-        return "marketName: {}, id: {}, m: {}, avg: {}, std: {}, buy: {}, sell: {}".format(
+        return "marketName: {}, id: {}, m: {}, n: {}, avg: {}, std: {}, buy: {}, sell: {}".format(
             self.marketName,
             self.marketId,
             self.m,
+            self.n,
             self.avg,
             self.std,
             self.buy,
@@ -204,8 +212,10 @@ class MarketTrend:
 def getEnv(argv):
     global public
     global private
+    global userMarketIds
+    print userMarketIds
     try:
-        opts, args = getopt.getopt(argv, "h", ["help", "public=", "private="])
+        opts, args = getopt.getopt(argv, "h", ["help", "public=", "private=", "marketIds="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -215,6 +225,8 @@ def getEnv(argv):
             public = arg
         elif opt == "--private":
             private = arg
+        elif opt == "--marketIds":
+            userMarketIds = arg.split(",")
 
 
 if __name__ == "__main__":
