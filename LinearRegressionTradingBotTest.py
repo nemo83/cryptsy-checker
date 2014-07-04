@@ -39,6 +39,15 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertEqual(normalizedTimes, [0, 0, 0, 0.25, 0.5, 1])
         self.assertEqual(normalizedPrices, [0, 0, 0, 0, 0, 0])
 
+    def test_calculateQuantity(self):
+        amountToInvest = 0.001
+        fee = 0.0025
+        buyPrice = 0.00000001
+
+        expectedQuantity = 99750
+
+        self.assertEqual(int(LinearRegressionTradingBot.calculateQuantity(amountToInvest, fee, buyPrice)), expectedQuantity)
+
 
 if __name__ == '__main__':
     unittest.main()

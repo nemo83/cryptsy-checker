@@ -41,6 +41,10 @@ def getNormalizedTimesAndPrices(tradeData):
     return normalizeValues(lastTradePrices), normalizeValues(lastTradeTimes)
 
 
+def calculateQuantity(amountToInvest, fee, buyPrice):
+    return (amountToInvest - amountToInvest * fee) / buyPrice
+
+
 def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketData):
     marketDetails = cryptsyMarketData['return']['markets']
     marketNames = [market for market in marketDetails]
@@ -90,7 +94,8 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
         if btcBalance < AMOUNT_TO_INVEST:
             break
 
-        quantity = (AMOUNT_TO_INVEST - AMOUNT_TO_INVEST * 0.0025) / marketTrend.buy
+        ## Market.buy has to be calculate a bit more smartly with the trending function.
+        quantity = calculateQuantity(AMOUNT_TO_INVEST, 0.0025, marketTrend.buy)
 
         responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, marketTrend.buy)
         if apiCallSucceded:
@@ -156,6 +161,8 @@ def main(argv):
             prices = [float(cryptoCurrencyDataSample['lasttradeprice']) for cryptoCurrencyDataSample in
                       cryptoCurrencyDataSamples]
 
+            # Is the price at which I expect to make some profit
+            ## Market.buy has to be calculate a bit more smartly with the trending function.
             sell = numpy.average(prices) + numpy.std(prices)
 
             marketId = cryptsyMarketData['return']['markets'][marketName]['marketid']
