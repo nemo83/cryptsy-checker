@@ -4,6 +4,7 @@ import ast
 import hashlib
 import time
 from datetime import timedelta, datetime
+
 import simplejson
 
 import requests
@@ -53,7 +54,6 @@ class CryptsyPy:
         else:
             return []
 
-
     def getAllActiveOrders(self):
         postData = "method={}&nonce={}".format("allmyorders", int(time.time()))
 
@@ -67,7 +67,6 @@ class CryptsyPy:
             []
 
         return buyMarkets
-
 
     def getAllTradesInTheLast(self, numDays):
         enddate = datetime.now()
@@ -97,26 +96,24 @@ class CryptsyPy:
 
         return tradeStats
 
-    def getBestPerformingMarketsInTheLast(self, numBestMarkets, numDays):
+    def getBestPerformingMarketsInTheLast(self, numMarkets, numDays):
         tradeStats = self.getAllTradesInTheLast(numDays)
         filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Buy'], tradeStats)
         sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
                                   reverse=True)
 
-        # for tradeStat in sortedTradeStats:
-        # numTrades = tradeStats[tradeStat]['NumTrades']
-        # buyTotal = tradeStats[tradeStat]['Buy']
-        # sellTotal = tradeStats[tradeStat]['Sell']
-        # print "MarketId: {}, NumTrades: {}, BuyTotal {}, SellTotal{}, Diff: {}".format(tradeStat, numTrades,
-        # buyTotal,
-        # sellTotal,
-        # sellTotal - buyTotal)
+        return sortedTradeStats[:numMarkets]
 
-        return sortedTradeStats[:numBestMarkets]
+    def getWorstPerformingMarketsInTheLast(self, numMarkets, numDays):
+        tradeStats = self.getAllTradesInTheLast(numDays)
+        filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] < tradeStats[x]['Buy'], tradeStats)
+        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
+                                  reverse=True)
+
+        return sortedTradeStats[:numMarkets]
 
     def toEightDigit(self, value):
         return "%.8f" % round(value, 8)
-
 
     def placeSellOrder(self, marketId, quantity, price):
         postData = "method={}&marketid={}&ordertype=Sell&quantity={}&price={}&nonce={}".format("createorder",

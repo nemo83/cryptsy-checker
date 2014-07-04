@@ -45,7 +45,7 @@ def calculateQuantity(amountToInvest, fee, buyPrice):
     return (amountToInvest - amountToInvest * fee) / buyPrice
 
 
-def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketData):
+def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
     marketDetails = cryptsyMarketData['return']['markets']
     marketNames = [market for market in marketDetails]
     timeStart = date.today() - timedelta(days=1)
@@ -83,9 +83,14 @@ def investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketDa
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 4 * 0.0025 * x.avg,
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
+    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(1, 1)
+    worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsInTheLast(5, 2)
+
     firstTenSorted = filter(lambda x: x.marketId in bestPerformingMarkets, sortedMarketTrends[:25])
 
-    otherMarketsSorted = filter(lambda x: x.marketId not in bestPerformingMarkets, sortedMarketTrends)
+    otherMarketsSorted = filter(
+        lambda x: x.marketId not in bestPerformingMarkets and x.marketId not in worstPerformingMarkets,
+        sortedMarketTrends)
 
     orderedMarketsToInvestOn = firstTenSorted + otherMarketsSorted
 
@@ -114,8 +119,6 @@ def main(argv):
     mongoClient = MongoClient(host="192.168.1.29")
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
-
-    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(1, 1)
 
     openBuyMarketsDetails = cryptsyClient.getAllActiveOrders()
     openBuyMarkets = []
@@ -171,7 +174,7 @@ def main(argv):
 
     if investBTCFlag:
         if btcBalance >= AMOUNT_TO_INVEST:
-            investBTC(btcBalance, bestPerformingMarkets, openBuyMarkets, cryptsyMarketData)
+            investBTC(btcBalance, openBuyMarkets, cryptsyMarketData)
 
     print "Complete"
 
