@@ -123,12 +123,13 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
                                        marketTrend.minX, marketTrend.scalingFactorX,
                                        marketTrend.minY, marketTrend.scalingFactorY)
 
-        buyPrice = estimatedPrice - marketTrend.std
-        ## Market.buy has to be calculate a bit more smartly with the trending function.
+        normalizedEstimatedPrice = float(estimatedPrice) / 100000000
+        buyPrice = normalizedEstimatedPrice - marketTrend.std
+
         quantity = calculateQuantity(AMOUNT_TO_INVEST, 0.0025, buyPrice)
 
-        # responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, buyPrice)
-        if True: ##apiCallSucceded:
+        responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, buyPrice)
+        if apiCallSucceded:
             btcBalance -= AMOUNT_TO_INVEST
 
 
@@ -147,8 +148,8 @@ def main(argv):
     cryptsyClient = CryptsyPy(public, private)
 
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection
-    # mongoClient = MongoClient(host="192.168.1.29")
-    mongoClient = MongoClient()
+    mongoClient = MongoClient(host="192.168.1.29")
+    # mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
@@ -235,8 +236,10 @@ def main(argv):
                                            marketTrend.m, marketTrend.n,
                                            marketTrend.minX, marketTrend.scalingFactorX,
                                            marketTrend.minY, marketTrend.scalingFactorY)
-            sellPrice = estimatedPrice + marketTrend.std
-            # cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, sellPrice)
+
+            normalizedEstimatedPrice = float(estimatedPrice) / 100000000
+            sellPrice = normalizedEstimatedPrice + marketTrend.std
+            cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, sellPrice)
 
     if investBTCFlag:
         if btcBalance >= AMOUNT_TO_INVEST:
