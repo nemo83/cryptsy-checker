@@ -117,6 +117,7 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
             break
 
         timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
+        print timeX
         estimatedPrice = estimateValue(timeX,
                                        marketTrend.m, marketTrend.n,
                                        marketTrend.minX, marketTrend.scalingFactorX,
@@ -126,8 +127,8 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
         ## Market.buy has to be calculate a bit more smartly with the trending function.
         quantity = calculateQuantity(AMOUNT_TO_INVEST, 0.0025, buyPrice)
 
-        responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, buyPrice)
-        if apiCallSucceded:
+        # responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, buyPrice)
+        if True: ##apiCallSucceded:
             btcBalance -= AMOUNT_TO_INVEST
 
 
@@ -229,12 +230,13 @@ def main(argv):
                                       std=numpy.std(prices))
 
             timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
+            print timeX
             estimatedPrice = estimateValue(timeX,
                                            marketTrend.m, marketTrend.n,
                                            marketTrend.minX, marketTrend.scalingFactorX,
                                            marketTrend.minY, marketTrend.scalingFactorY)
             sellPrice = estimatedPrice + marketTrend.std
-            cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, sellPrice)
+            # cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, sellPrice)
 
     if investBTCFlag:
         if btcBalance >= AMOUNT_TO_INVEST:
