@@ -22,24 +22,14 @@ userMarketIds = None
 epoch = datetime.utcfromtimestamp(0)
 
 
-def getNormalizedTimesAndPrices(tradeData):
+def normalizeValues(values):
     def normalize(value, min, scalingFactor):
         return (value - min) / scalingFactor if scalingFactor != 0 else (value - min)
 
-    def normalizeValues(values):
-        minValue = min(values)
-        scalingFactor = max(values) - minValue
-        normalizedValues = [normalize(value, minValue, scalingFactor) for value in values]
-        return normalizedValues
-
-    lastTradeTimes = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
-                      for
-                      tradeDataSample in
-                      tradeData]
-
-    lastTradePrices = [float(tradeDataSample[1]) * 100000000 for tradeDataSample in tradeData]
-
-    return normalizeValues(lastTradePrices), normalizeValues(lastTradeTimes)
+    minValue = min(values)
+    scalingFactor = max(values) - minValue
+    normalizedValues = [normalize(value, minValue, scalingFactor) for value in values]
+    return normalizedValues, minValue, scalingFactor
 
 
 def calculateQuantity(amountToInvest, fee, buyPrice):
@@ -70,15 +60,28 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
         if len(uniqueTradeData) < 200:
             continue
 
-        normalizedLastTradePrices, normalizedLastTradeTimes = getNormalizedTimesAndPrices(set(uniqueTradeData))
+        times = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
+                 for
+                 tradeDataSample in
+                 uniqueTradeData]
 
-        currencyTrend = numpy.polyfit(normalizedLastTradeTimes, normalizedLastTradePrices, 1)
+        prices = [float(tradeDataSample[1]) * 100000000 for tradeDataSample in uniqueTradeData]
+
+        normalizedTimes, minTime, timeScalingFactor = normalizeValues(times)
+
+        normalizedPrices, minPrice, priceScalingFactor = normalizeValues(prices)
+
+        currencyTrend = numpy.polyfit(normalizedTimes, normalizedPrices, 1)
 
         prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
 
         marketTrend = MarketTrend(marketName=marketName, marketId=marketDetails[marketName]['marketid'],
                                   m=currencyTrend[0],
                                   n=currencyTrend[1],
+                                  minX=minTime,
+                                  scalingFactorX=timeScalingFactor,
+                                  minY=minPrice,
+                                  scalingFactorY=priceScalingFactor,
                                   avg=numpy.average(prices),
                                   std=numpy.std(prices))
 
@@ -113,12 +116,25 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
         if btcBalance < AMOUNT_TO_INVEST:
             break
 
-        ## Market.buy has to be calculate a bit more smartly with the trending function.
-        quantity = calculateQuantity(AMOUNT_TO_INVEST, 0.0025, marketTrend.buy)
+        timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
+        estimatedPrice = estimateValue(timeX,
+                                       marketTrend.m, marketTrend.n,
+                                       marketTrend.minX, marketTrend.scalingFactorX,
+                                       marketTrend.minY, marketTrend.scalingFactorY)
 
-        responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, marketTrend.buy)
+        buyPrice = estimatedPrice - marketTrend.std
+        ## Market.buy has to be calculate a bit more smartly with the trending function.
+        quantity = calculateQuantity(AMOUNT_TO_INVEST, 0.0025, buyPrice)
+
+        responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, buyPrice)
         if apiCallSucceded:
             btcBalance -= AMOUNT_TO_INVEST
+
+
+def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
+    x_ = (float(x) - minX) / scalingFactorX
+    y_ = x_ * m + n
+    return y_ * scalingFactorY + minY
 
 
 def main(argv):
@@ -176,16 +192,49 @@ def main(argv):
             cryptoCurrencyDataSamples = mongoMarketsCollection.find(
                 {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d")}})
 
-            prices = [float(cryptoCurrencyDataSample['lasttradeprice']) for cryptoCurrencyDataSample in
-                      cryptoCurrencyDataSamples]
+            tradeData = [(cryptoCurrencySample['lasttradetime'], cryptoCurrencySample['lasttradeprice']) for
+                         cryptoCurrencySample in cryptoCurrencyDataSamples]
 
-            # Is the price at which I expect to make some profit
-            ## Market.buy has to be calculate a bit more smartly with the trending function.
-            sell = numpy.average(prices) + numpy.std(prices)
+            uniqueTradeData = set(tradeData)
 
-            marketId = cryptsyMarketData['return']['markets'][marketName]['marketid']
+            if len(uniqueTradeData) < 200:
+                continue
+
+            times = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
+                     for
+                     tradeDataSample in
+                     uniqueTradeData]
+
+            prices = [float(tradeDataSample[1]) * 100000000 for tradeDataSample in uniqueTradeData]
+
+            normalizedTimes, minTime, timeScalingFactor = normalizeValues(times)
+
+            normalizedPrices, minPrice, priceScalingFactor = normalizeValues(prices)
+
+            currencyTrend = numpy.polyfit(normalizedTimes, normalizedPrices, 1)
+
+            prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
+
             quantity = balance[1]
-            cryptsyClient.placeSellOrder(marketId, quantity, sell)
+
+            marketTrend = MarketTrend(marketName=marketName,
+                                      marketId=cryptsyMarketData['return']['markets'][marketName]['marketid'],
+                                      m=currencyTrend[0],
+                                      n=currencyTrend[1],
+                                      minX=minTime,
+                                      scalingFactorX=timeScalingFactor,
+                                      minY=minPrice,
+                                      scalingFactorY=priceScalingFactor,
+                                      avg=numpy.average(prices),
+                                      std=numpy.std(prices))
+
+            timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
+            estimatedPrice = estimateValue(timeX,
+                                           marketTrend.m, marketTrend.n,
+                                           marketTrend.minX, marketTrend.scalingFactorX,
+                                           marketTrend.minY, marketTrend.scalingFactorY)
+            sellPrice = estimatedPrice + marketTrend.std
+            cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, sellPrice)
 
     if investBTCFlag:
         if btcBalance >= AMOUNT_TO_INVEST:
@@ -195,23 +244,30 @@ def main(argv):
 
 
 class MarketTrend:
-    def __init__(self, marketName, marketId, m, n, avg, std):
+    def __init__(self, marketName, marketId, m, n, minX, scalingFactorX, minY, scalingFactorY, avg, std):
         self.marketName = marketName
         self.marketId = marketId
         self.m = m
         self.n = n
+        self.minX = minX
+        self.scalingFactorX = scalingFactorX
+        self.minY = minY
+        self.scalingFactorY = scalingFactorY
         self.avg = avg
         self.std = std
         self.buy = avg - std
         self.sell = avg + std
 
     def __str__(self):
-        return "marketName: {}, id: {}, m: {}, n: {}, avg: {}, std: {}, buy: {}, sell: {}".format(
+        return "marketName: {}, id: {}, m: {}, n: {}, minX: {}, scalingFactorX: {}, minY: {}, scalingFactorY: {}, avg: {}, std: {}, buy: {}, sell: {}".format(
             self.marketName,
             self.marketId,
             self.m,
             self.n,
-            self.avg,
+            self.minX,
+            self.scalingFactorX,
+            self.minY,
+            self.scalingFactorY,
             self.std,
             self.buy,
             self.sell

@@ -1,4 +1,7 @@
 import unittest
+
+import numpy
+
 import LinearRegressionTradingBot
 
 
@@ -46,7 +49,22 @@ class TestSequenceFunctions(unittest.TestCase):
 
         expectedQuantity = 99750
 
-        self.assertEqual(int(LinearRegressionTradingBot.calculateQuantity(amountToInvest, fee, buyPrice)), expectedQuantity)
+        self.assertEqual(int(LinearRegressionTradingBot.calculateQuantity(amountToInvest, fee, buyPrice)),
+                         expectedQuantity)
+
+    def test_poly(self):
+        x = [0, 0.5, 1]
+        y = [0, 0.5, 1]
+
+        self.assertEqual(numpy.polyfit(x, y), [1, 0])
+
+    def test_estimateValue(self):
+        x = [0, 0.5, 1]
+        y = [0, 0.5, 1]
+
+        self.assertEqual(
+            LinearRegressionTradingBot.estimateValue(3, m=1, n=0, minX=0, scalingFactorX=2, minY=0, scalingFactorY=2),
+            3)
 
 
 if __name__ == '__main__':
