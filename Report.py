@@ -20,7 +20,8 @@ def main(argv):
     cryptsyclient = CryptsyPy(public, private)
 
     tradeStats = cryptsyclient.getAllTradesInTheLast(60)
-    sortedTradeStats = sorted(tradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
+    filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Buy'] > 0, tradeStats)
+    sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
                               reverse=True)
 
     for tradeStat in sortedTradeStats:

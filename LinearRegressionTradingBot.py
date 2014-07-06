@@ -18,7 +18,7 @@ mongoMarketsCollection = None
 
 public = ''
 private = ''
-userMarketIds = None
+userMarketIds = []
 epoch = datetime.utcfromtimestamp(0)
 
 
