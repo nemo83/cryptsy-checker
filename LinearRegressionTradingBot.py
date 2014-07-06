@@ -93,7 +93,7 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
 
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(3, 5)
 
-    worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsInTheLast(5, 2)
+    worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsInTheLast(25, 5)
 
     suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
                                                                                 bestPerformingMarkets)
