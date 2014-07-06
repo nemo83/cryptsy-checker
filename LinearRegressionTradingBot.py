@@ -199,9 +199,6 @@ def main(argv):
 
             uniqueTradeData = set(tradeData)
 
-            if len(uniqueTradeData) < 200:
-                continue
-
             times = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
                      for
                      tradeDataSample in
