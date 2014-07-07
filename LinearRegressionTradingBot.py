@@ -123,7 +123,6 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
         if btcBalance < AMOUNT_TO_INVEST:
             break
 
-
         timeStart = date.today() - timedelta(hours=5) - timedelta(hours=3)
         buyMarketTrend = getMarketTrendFor(cryptsyMarketData=cryptsyMarketData, marketTrend.marketName, timeStart)
 
@@ -150,7 +149,7 @@ def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
     return y_ * scalingFactorY + minY
 
 
-def getMarketTrendFor(cryptsyMarketData, marketName, mongoMarketsCollection, timeStart):
+def getMarketTrendFor(cryptsyMarketData, marketName, timeStart):
     cryptoCurrencyDataSamples = mongoMarketsCollection.find(
         {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d")}})
     tradeData = [(cryptoCurrencySample['lasttradetime'], cryptoCurrencySample['lasttradeprice']) for
