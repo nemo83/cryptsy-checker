@@ -50,8 +50,8 @@ def getMarketTrends(filteredBtcMarkets, marketDetails):
 
         uniqueTradeData = set(tradeData)
 
-        # if len(uniqueTradeData) < 200:
-        #     continue
+        if len(uniqueTradeData) < 200:
+            continue
 
         times = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
                  for
@@ -187,8 +187,8 @@ def main(argv):
     cryptsyClient = CryptsyPy(public, private)
 
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection
-    mongoClient = MongoClient(host="192.168.1.29")
-    # mongoClient = MongoClient()
+    # mongoClient = MongoClient(host="192.168.1.29")
+    mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
