@@ -36,18 +36,11 @@ def calculateQuantity(amountToInvest, fee, buyPrice):
     return (amountToInvest - amountToInvest * fee) / buyPrice
 
 
-def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
-    marketDetails = cryptsyMarketData['return']['markets']
-    marketNames = [market for market in marketDetails]
-    timeStart = date.today() - timedelta(days=1)
-    btcMarketNames = filter(lambda x: 'BTC' in x, marketNames)
-
+def getMarketTrends(filteredBtcMarkets, marketDetails):
     marketTrends = []
     marketIds = []
-
-    filteredBtcMarkets = filter(lambda x: marketDetails[x]['marketid'] not in openBuyMarkets, btcMarketNames)
-
     for marketName in filteredBtcMarkets:
+        timeStart = date.today() - timedelta(days=1)
 
         cryptoCurrencyDataSamples = mongoMarketsCollection.find(
             {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d")}})
@@ -57,8 +50,8 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
 
         uniqueTradeData = set(tradeData)
 
-        if len(uniqueTradeData) < 200:
-            continue
+        # if len(uniqueTradeData) < 200:
+        #     continue
 
         times = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
                  for
@@ -88,12 +81,26 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
         marketTrends.append(marketTrend)
         marketIds.append(marketDetails[marketName]['marketid'])
 
+    return marketTrends, marketIds
+
+
+def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
+    marketDetails = cryptsyMarketData['return']['markets']
+
+    marketNames = [market for market in marketDetails]
+
+    btcMarketNames = filter(lambda x: 'BTC' in x, marketNames)
+
+    filteredBtcMarkets = filter(lambda x: marketDetails[x]['marketid'] not in openBuyMarkets, btcMarketNames)
+
+    marketTrends, marketIds = getMarketTrends(filteredBtcMarkets, marketDetails)
+
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 4 * 0.0025 * x.avg,
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
-    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(3, 5)
+    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(2)[:3]
 
-    worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsInTheLast(25, 5)
+    worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsInTheLast(5)
 
     suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
                                                                                 bestPerformingMarkets)
@@ -116,14 +123,18 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
         if btcBalance < AMOUNT_TO_INVEST:
             break
 
+
+        timeStart = date.today() - timedelta(hours=5) - timedelta(hours=3)
+        buyMarketTrend = getMarketTrendFor(cryptsyMarketData=cryptsyMarketData, marketTrend.marketName, timeStart)
+
         timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
-        print timeX
         estimatedPrice = estimateValue(timeX,
-                                       marketTrend.m, marketTrend.n,
-                                       marketTrend.minX, marketTrend.scalingFactorX,
-                                       marketTrend.minY, marketTrend.scalingFactorY)
+                                       buyMarketTrend.m, buyMarketTrend.n,
+                                       buyMarketTrend.minX, buyMarketTrend.scalingFactorX,
+                                       buyMarketTrend.minY, buyMarketTrend.scalingFactorY)
 
         normalizedEstimatedPrice = float(estimatedPrice) / 100000000
+
         buyPrice = normalizedEstimatedPrice - marketTrend.std
 
         quantity = calculateQuantity(AMOUNT_TO_INVEST, 0.0025, buyPrice)
@@ -137,6 +148,35 @@ def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
     x_ = (float(x) - minX) / scalingFactorX
     y_ = x_ * m + n
     return y_ * scalingFactorY + minY
+
+
+def getMarketTrendFor(cryptsyMarketData, marketName, mongoMarketsCollection, timeStart):
+    cryptoCurrencyDataSamples = mongoMarketsCollection.find(
+        {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d")}})
+    tradeData = [(cryptoCurrencySample['lasttradetime'], cryptoCurrencySample['lasttradeprice']) for
+                 cryptoCurrencySample in cryptoCurrencyDataSamples]
+    uniqueTradeData = set(tradeData)
+    times = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
+             for
+             tradeDataSample in
+             uniqueTradeData]
+    prices = [float(tradeDataSample[1]) * 100000000 for tradeDataSample in uniqueTradeData]
+    normalizedTimes, minTime, timeScalingFactor = normalizeValues(times)
+    normalizedPrices, minPrice, priceScalingFactor = normalizeValues(prices)
+    currencyTrend = numpy.polyfit(normalizedTimes, normalizedPrices, 1)
+    prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
+
+    marketTrend = MarketTrend(marketName=marketName,
+                              marketId=cryptsyMarketData['return']['markets'][marketName]['marketid'],
+                              m=currencyTrend[0],
+                              n=currencyTrend[1],
+                              minX=minTime,
+                              scalingFactorX=timeScalingFactor,
+                              minY=minPrice,
+                              scalingFactorY=priceScalingFactor,
+                              avg=numpy.average(prices),
+                              std=numpy.std(prices))
+    return marketTrend
 
 
 def main(argv):
@@ -189,46 +229,12 @@ def main(argv):
 
             marketName = "{}/BTC".format(balance[0])
 
-            timeStart = date.today() - timedelta(days=1)
+            timeStart = date.today() - timedelta(hours=5) - timedelta(hours=3)
 
-            cryptoCurrencyDataSamples = mongoMarketsCollection.find(
-                {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d")}})
-
-            tradeData = [(cryptoCurrencySample['lasttradetime'], cryptoCurrencySample['lasttradeprice']) for
-                         cryptoCurrencySample in cryptoCurrencyDataSamples]
-
-            uniqueTradeData = set(tradeData)
-
-            times = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
-                     for
-                     tradeDataSample in
-                     uniqueTradeData]
-
-            prices = [float(tradeDataSample[1]) * 100000000 for tradeDataSample in uniqueTradeData]
-
-            normalizedTimes, minTime, timeScalingFactor = normalizeValues(times)
-
-            normalizedPrices, minPrice, priceScalingFactor = normalizeValues(prices)
-
-            currencyTrend = numpy.polyfit(normalizedTimes, normalizedPrices, 1)
-
-            prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
+            marketTrend = getMarketTrendFor(cryptsyMarketData, marketName, timeStart)
 
             quantity = balance[1]
-
-            marketTrend = MarketTrend(marketName=marketName,
-                                      marketId=cryptsyMarketData['return']['markets'][marketName]['marketid'],
-                                      m=currencyTrend[0],
-                                      n=currencyTrend[1],
-                                      minX=minTime,
-                                      scalingFactorX=timeScalingFactor,
-                                      minY=minPrice,
-                                      scalingFactorY=priceScalingFactor,
-                                      avg=numpy.average(prices),
-                                      std=numpy.std(prices))
-
             timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
-            print timeX
             estimatedPrice = estimateValue(timeX,
                                            marketTrend.m, marketTrend.n,
                                            marketTrend.minX, marketTrend.scalingFactorX,

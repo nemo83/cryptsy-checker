@@ -96,21 +96,21 @@ class CryptsyPy:
 
         return tradeStats
 
-    def getBestPerformingMarketsInTheLast(self, numMarkets, numDays):
+    def getBestPerformingMarketsInTheLast(self, numDays):
         tradeStats = self.getAllTradesInTheLast(numDays)
         filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Buy'] > 0, tradeStats)
         sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
                                   reverse=True)
 
-        return sortedTradeStats[:numMarkets]
+        return sortedTradeStats
 
-    def getWorstPerformingMarketsInTheLast(self, numMarkets, numDays):
+    def getWorstPerformingMarketsInTheLast(self, numDays):
         tradeStats = self.getAllTradesInTheLast(numDays)
         filteredTradeStats = filter(lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Buy'], tradeStats)
         sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
                                   reverse=True)
 
-        return sortedTradeStats[:numMarkets]
+        return sortedTradeStats
 
     def toEightDigit(self, value):
         return "%.8f" % round(value, 8)
