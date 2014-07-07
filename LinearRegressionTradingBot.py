@@ -207,7 +207,7 @@ def main(argv):
         openMarketNormalized = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=5)
         if openBuyMarketsDetail[3] == 'Buy' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
             cryptsyClient.cancelOrder(openBuyMarketsDetail[1])
-        elif openBuyMarketsDetail[3] == 'Sell' and (openMarketNormalized + timedelta(hours=3)) < datetime.now():
+        elif openBuyMarketsDetail[3] == 'Sell' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
             cryptsyClient.cancelOrder(openBuyMarketsDetail[1])
             openBuyMarkets.append(openBuyMarketsDetail[0])
         else:
