@@ -251,7 +251,7 @@ def main(argv):
             cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, sellPrice)
 
     if investBTCFlag:
-        if btcBalance >= AMOUNT_TO_INVEST:
+        if btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
             investBTC(btcBalance, openBuyMarkets, cryptsyMarketData)
 
     print "Complete"
