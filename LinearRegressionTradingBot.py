@@ -8,8 +8,8 @@ from pymongo import MongoClient
 
 from CryptsyPy import CryptsyPy, loadCryptsyMarketData
 
-
-AMOUNT_TO_INVEST = 0.001
+BASE_STAKE = 0.001
+MINIMUM_AMOUNT_TO_INVEST = 0.0005
 
 cryptsyClient = None
 mongoClient = None
@@ -100,7 +100,7 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
 
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(2)[:3]
 
-    worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsInTheLast(5)
+    worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsInTheLast(3)
 
     suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
                                                                                 bestPerformingMarkets)
@@ -120,8 +120,17 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
 
     for marketTrend in marketTrendsToInvestOn:
 
-        if btcBalance < AMOUNT_TO_INVEST:
+        if btcBalance < MINIMUM_AMOUNT_TO_INVEST:
             break
+
+        if marketTrend.marketId in userMarketIds:
+            desiredAmountToInvest = BASE_STAKE * 3
+        elif marketTrend.marketId in bestPerformingMarkets:
+            desiredAmountToInvest = BASE_STAKE * 2
+        else:
+            desiredAmountToInvest = BASE_STAKE
+
+        amountToInvest = min(desiredAmountToInvest, btcBalance)
 
         timeStart = date.today() - timedelta(hours=5) - timedelta(hours=3)
         buyMarketTrend = getMarketTrendFor(cryptsyMarketData, marketTrend.marketName, timeStart)
@@ -136,11 +145,11 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
 
         buyPrice = normalizedEstimatedPrice - marketTrend.std
 
-        quantity = calculateQuantity(AMOUNT_TO_INVEST, 0.0025, buyPrice)
+        quantity = calculateQuantity(amountToInvest, 0.0025, buyPrice)
 
         responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, buyPrice)
         if apiCallSucceded:
-            btcBalance -= AMOUNT_TO_INVEST
+            btcBalance -= amountToInvest
 
 
 def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
@@ -197,11 +206,9 @@ def main(argv):
     for openBuyMarketsDetail in openBuyMarketsDetails:
         openMarketNormalized = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=5)
         if openBuyMarketsDetail[3] == 'Buy' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
-            postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
-            cryptsyClient.makeAPIcall(postData)
+            cryptsyClient.cancelOrder(openBuyMarketsDetail[1])
         elif openBuyMarketsDetail[3] == 'Sell' and (openMarketNormalized + timedelta(hours=3)) < datetime.now():
-            postData = "method={}&orderid={}&nonce={}".format("cancelorder", openBuyMarketsDetail[1], int(time.time()))
-            cryptsyClient.makeAPIcall(postData)
+            cryptsyClient.cancelOrder(openBuyMarketsDetail[1])
             openBuyMarkets.append(openBuyMarketsDetail[0])
         else:
             openBuyMarkets.append(openBuyMarketsDetail[0])

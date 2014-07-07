@@ -4,7 +4,6 @@ import ast
 import hashlib
 import time
 from datetime import timedelta, datetime
-
 import simplejson
 
 import requests
@@ -107,8 +106,7 @@ class CryptsyPy:
     def getWorstPerformingMarketsInTheLast(self, numDays):
         tradeStats = self.getAllTradesInTheLast(numDays)
         filteredTradeStats = filter(lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Buy'], tradeStats)
-        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
-                                  reverse=True)
+        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'])
 
         return sortedTradeStats
 
@@ -141,3 +139,9 @@ class CryptsyPy:
                                                                                               int(time.time()))
         print postData
         return self.makeAPIcall(postData)
+
+    def cancelOrder(self, orderid):
+        postData = "method={}&orderid={}&nonce={}".format("cancelorder", orderid, int(time.time()))
+        return self.makeAPIcall(postData)
+
+
