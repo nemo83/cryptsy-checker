@@ -124,7 +124,7 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
             break
 
         timeStart = date.today() - timedelta(hours=5) - timedelta(hours=3)
-        buyMarketTrend = getMarketTrendFor(cryptsyMarketData=cryptsyMarketData, marketTrend.marketName, timeStart)
+        buyMarketTrend = getMarketTrendFor(cryptsyMarketData, marketTrend.marketName, timeStart)
 
         timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
         estimatedPrice = estimateValue(timeX,
