@@ -115,6 +115,11 @@ class CryptsyPy:
     def toEightDigit(self, value):
         return "%.8f" % round(value, 8)
 
+    def cancelAllOrders(self):
+        postData = "method={}&nonce={}".format("cancelallorders", int(time.time()))
+        self.makeAPIcall(postData)
+
+
     def placeSellOrder(self, marketId, quantity, price):
         postData = "method={}&marketid={}&ordertype=Sell&quantity={}&price={}&nonce={}".format("createorder",
                                                                                                marketId,
