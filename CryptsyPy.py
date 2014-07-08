@@ -58,12 +58,10 @@ class CryptsyPy:
 
         orders, apiCallSucceded = self.makeAPIcall(postData)
 
+        buyMarkets = []
         if apiCallSucceded:
-            buyMarkets = []
             for order in orders:
                 buyMarkets.append((order['marketid'], order['orderid'], order['created'], order['ordertype']))
-        else:
-            []
 
         return buyMarkets
 
