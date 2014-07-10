@@ -105,6 +105,8 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
     suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
                                                                                 bestPerformingMarkets)
 
+    print "Suggested Markets: {}".format(suggestedMarkets)
+
     suggestedMarketsTrends = []
 
     for marketId in suggestedMarkets:
@@ -116,9 +118,13 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
         lambda x: x.marketId not in suggestedMarkets and x.marketId not in worstPerformingMarkets,
         sortedMarketTrends)
 
+    print "Other Markets: {}".format(otherMarketsSorted)
+
     marketTrendsToInvestOn = suggestedMarketsTrends + otherMarketsSorted
 
     for marketTrend in marketTrendsToInvestOn:
+
+        print "Loop. Balance: {}, market: {}".format(btcBalance, marketTrend.marketId)
 
         if btcBalance < MINIMUM_AMOUNT_TO_INVEST:
             break

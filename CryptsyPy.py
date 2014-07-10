@@ -115,7 +115,6 @@ class CryptsyPy:
         postData = "method={}&nonce={}".format("cancelallorders", int(time.time()))
         self.makeAPIcall(postData)
 
-
     def placeSellOrder(self, marketId, quantity, price):
         postData = "method={}&marketid={}&ordertype=Sell&quantity={}&price={}&nonce={}".format("createorder",
                                                                                                marketId,
