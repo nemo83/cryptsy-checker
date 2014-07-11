@@ -8,7 +8,7 @@ from pymongo import MongoClient
 
 from CryptsyPy import CryptsyPy, loadCryptsyMarketData
 
-BASE_STAKE = 0.001
+BASE_STAKE = 0.002
 MINIMUM_AMOUNT_TO_INVEST = 0.0005
 
 cryptsyClient = None
