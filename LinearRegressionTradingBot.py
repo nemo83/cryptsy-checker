@@ -157,7 +157,6 @@ def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
 
 
 def getMarketTrendFor(marketName, marketId, lastXHours):
-    print "Market Name: {}".format(marketName)
     timeStart = datetime.now() - timedelta(hours=5) - timedelta(hours=lastXHours)
 
     cryptoCurrencyDataSamples = mongoMarketsCollection.find(
@@ -196,8 +195,8 @@ def initCryptsyClient():
 
 def initMongoClient():
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection
-    mongoClient = MongoClient(host="192.168.1.29")
-    # mongoClient = MongoClient()
+    # mongoClient = MongoClient(host="192.168.1.29")
+    mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
