@@ -1,12 +1,13 @@
 from datetime import date, timedelta, datetime
-import time
 import getopt
 import sys
+from time import sleep
 
 import numpy
 from pymongo import MongoClient
 
 from CryptsyPy import CryptsyPy, loadCryptsyMarketData
+
 
 BASE_STAKE = 0.001
 MINIMUM_AMOUNT_TO_INVEST = 0.0005
@@ -84,18 +85,16 @@ def getMarketTrends(filteredBtcMarkets, marketDetails):
     return marketTrends, marketIds
 
 
-def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
-    marketDetails = cryptsyMarketData['return']['markets']
-
-    marketNames = [market for market in marketDetails]
+def investBTC(btcBalance, activeMarkets, marketData):
+    marketNames = [market for market in marketData]
 
     btcMarketNames = filter(lambda x: 'BTC' in x, marketNames)
 
-    filteredBtcMarkets = filter(lambda x: marketDetails[x]['marketid'] not in openBuyMarkets, btcMarketNames)
+    inactiveBtcMarkets = filter(lambda x: marketData[x]['marketid'] not in activeMarkets, btcMarketNames)
 
-    marketTrends, marketIds = getMarketTrends(filteredBtcMarkets, marketDetails)
+    marketTrends, marketIds = getMarketTrends(inactiveBtcMarkets, marketData)
 
-    sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 4 * 0.0025 * x.avg,
+    sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 2 * (x.avg * 0.0025),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(2)[:4]
@@ -104,8 +103,6 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
 
     suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
                                                                                 bestPerformingMarkets)
-
-    print "Suggested Markets: {}".format(suggestedMarkets)
 
     suggestedMarketsTrends = []
 
@@ -118,13 +115,9 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
         lambda x: x.marketId not in suggestedMarkets and x.marketId not in worstPerformingMarkets,
         sortedMarketTrends)
 
-    print "Other Markets: {}".format(otherMarketsSorted)
-
     marketTrendsToInvestOn = suggestedMarketsTrends + otherMarketsSorted
 
     for marketTrend in marketTrendsToInvestOn:
-
-        print "Loop. Balance: {}, market: {}".format(btcBalance, marketTrend.marketId)
 
         if btcBalance < MINIMUM_AMOUNT_TO_INVEST:
             break
@@ -138,8 +131,7 @@ def investBTC(btcBalance, openBuyMarkets, cryptsyMarketData):
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
-        timeStart = date.today() - timedelta(hours=5) - timedelta(hours=3)
-        buyMarketTrend = getMarketTrendFor(cryptsyMarketData, marketTrend.marketName, timeStart)
+        buyMarketTrend = getMarketTrendFor(marketTrend.marketName, marketTrend.marketId, 5)
 
         timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
         estimatedPrice = estimateValue(timeX,
@@ -164,9 +156,13 @@ def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
     return y_ * scalingFactorY + minY
 
 
-def getMarketTrendFor(cryptsyMarketData, marketName, timeStart):
+def getMarketTrendFor(marketName, marketId, lastXHours):
+    print "Market Name: {}".format(marketName)
+    timeStart = datetime.now() - timedelta(hours=5) - timedelta(hours=lastXHours)
+
     cryptoCurrencyDataSamples = mongoMarketsCollection.find(
-        {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d")}})
+        {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d %H:%M:%S")}})
+
     tradeData = [(cryptoCurrencySample['lasttradetime'], cryptoCurrencySample['lasttradeprice']) for
                  cryptoCurrencySample in cryptoCurrencyDataSamples]
     uniqueTradeData = set(tradeData)
@@ -181,7 +177,7 @@ def getMarketTrendFor(cryptsyMarketData, marketName, timeStart):
     prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
 
     marketTrend = MarketTrend(marketName=marketName,
-                              marketId=cryptsyMarketData['return']['markets'][marketName]['marketid'],
+                              marketId=marketId,
                               m=currencyTrend[0],
                               n=currencyTrend[1],
                               minX=minTime,
@@ -193,72 +189,82 @@ def getMarketTrendFor(cryptsyMarketData, marketName, timeStart):
     return marketTrend
 
 
+def initCryptsyClient():
+    global cryptsyClient
+    cryptsyClient = CryptsyPy(public, private)
+
+
+def initMongoClient():
+    global mongoClient, mongoCryptsyDb, mongoMarketsCollection
+    mongoClient = MongoClient(host="192.168.1.29")
+    # mongoClient = MongoClient()
+    mongoCryptsyDb = mongoClient.cryptsy_database
+    mongoMarketsCollection = mongoCryptsyDb.markets_collection
+
+
+def splitMarkets():
+    allActiveOrders = cryptsyClient.getAllActiveOrders()
+    activeMarkets = []
+    ordersToBeCancelled = []
+    for openOrder in allActiveOrders:
+        openMarketNormalized = datetime.strptime(openOrder[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=5)
+        if openOrder[3] == 'Buy' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
+            ordersToBeCancelled.append(openOrder[1])
+        elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
+            ordersToBeCancelled.append(openOrder[1])
+            activeMarkets.append(openOrder[0])
+        else:
+            activeMarkets.append(openOrder[0])
+    return activeMarkets, ordersToBeCancelled
+
+
+def placeSellOrder(marketName, marketId, quantity):
+    marketTrend = getMarketTrendFor(marketName, marketId, 5)
+    timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
+    estimatedPrice = estimateValue(timeX,
+                                   marketTrend.m, marketTrend.n,
+                                   marketTrend.minX, marketTrend.scalingFactorX,
+                                   marketTrend.minY, marketTrend.scalingFactorY)
+    normalizedEstimatedPrice = float(estimatedPrice) / 100000000
+    sellPrice = normalizedEstimatedPrice + marketTrend.std
+    cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, sellPrice)
+
+
 def main(argv):
     print "Started."
 
     getEnv(argv)
 
-    global cryptsyClient
-    cryptsyClient = CryptsyPy(public, private)
+    initCryptsyClient()
 
-    global mongoClient, mongoCryptsyDb, mongoMarketsCollection
-    # mongoClient = MongoClient(host="192.168.1.29")
-    mongoClient = MongoClient()
-    mongoCryptsyDb = mongoClient.cryptsy_database
-    mongoMarketsCollection = mongoCryptsyDb.markets_collection
+    initMongoClient()
 
-    openBuyMarketsDetails = cryptsyClient.getAllActiveOrders()
-    openBuyMarkets = []
-    for openBuyMarketsDetail in openBuyMarketsDetails:
-        openMarketNormalized = datetime.strptime(openBuyMarketsDetail[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=5)
-        if openBuyMarketsDetail[3] == 'Buy' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
-            cryptsyClient.cancelOrder(openBuyMarketsDetail[1])
-        elif openBuyMarketsDetail[3] == 'Sell' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
-            cryptsyClient.cancelOrder(openBuyMarketsDetail[1])
-            openBuyMarkets.append(openBuyMarketsDetail[0])
-        else:
-            openBuyMarkets.append(openBuyMarketsDetail[0])
+    activeMarkets, ordersToBeCancelled = splitMarkets()
 
-    balanceList = cryptsyClient.getInfo()
+    for orderToBeCancelled in ordersToBeCancelled:
+        cryptsyClient.cancelOrder(orderToBeCancelled)
 
+    # Wait for cancellations to take place
+    sleep(5)
+
+    balanceList = filter(lambda x: x[0] != 'Points', cryptsyClient.getInfo())
     print "Current Balance:"
     for balance in balanceList:
         print "{}, {}".format(balance[0], balance[1])
 
-    cryptsyMarketData = loadCryptsyMarketData()
-
-    investBTCFlag = False
-
-    filteredBalanceList = filter(lambda x: x[0] != 'Points', balanceList)
+    marketData = loadCryptsyMarketData()
 
     btcBalance = 0.0
-    for balance in filteredBalanceList:
-
+    for balance in balanceList:
         if balance[0] == 'BTC':
             btcBalance = balance[1]
-            investBTCFlag = True
         else:
-
             marketName = "{}/BTC".format(balance[0])
+            marketId = marketData[marketName]['marketid']
+            placeSellOrder(marketName, marketId, balance[1])
 
-            timeStart = date.today() - timedelta(hours=5) - timedelta(hours=3)
-
-            marketTrend = getMarketTrendFor(cryptsyMarketData, marketName, timeStart)
-
-            quantity = balance[1]
-            timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
-            estimatedPrice = estimateValue(timeX,
-                                           marketTrend.m, marketTrend.n,
-                                           marketTrend.minX, marketTrend.scalingFactorX,
-                                           marketTrend.minY, marketTrend.scalingFactorY)
-
-            normalizedEstimatedPrice = float(estimatedPrice) / 100000000
-            sellPrice = normalizedEstimatedPrice + marketTrend.std
-            cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, sellPrice)
-
-    if investBTCFlag:
-        if btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
-            investBTC(btcBalance, openBuyMarkets, cryptsyMarketData)
+    if btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
+        investBTC(btcBalance, activeMarkets, marketData)
 
     print "Complete"
 

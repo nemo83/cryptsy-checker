@@ -17,7 +17,7 @@ def loadCryptsyMarketData():
     if success != 1:
         print "Failed to retrieve Markets"
         exit(-1)
-    return cryptsyMarketData
+    return cryptsyMarketData['return']['markets']
 
 
 class CryptsyPy:
@@ -124,7 +124,7 @@ class CryptsyPy:
                                                                                                    price),
                                                                                                int(time.time()))
         print postData
-        self.makeAPIcall(postData)
+        # self.makeAPIcall(postData)
 
     def placeBuyOrder(self, marketId, quantity, price):
         postData = "method={}&marketid={}&ordertype=Buy&quantity={}&price={}&nonce={}".format("createorder",
@@ -135,7 +135,7 @@ class CryptsyPy:
                                                                                                   price),
                                                                                               int(time.time()))
         print postData
-        return self.makeAPIcall(postData)
+        # return self.makeAPIcall(postData)
 
     def cancelOrder(self, orderid):
         postData = "method={}&orderid={}&nonce={}".format("cancelorder", orderid, int(time.time()))
