@@ -131,7 +131,7 @@ def investBTC(btcBalance, activeMarkets, marketData):
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
-        buyMarketTrend = getMarketTrendFor(marketTrend.marketName, marketTrend.marketId, 5)
+        buyMarketTrend = getMarketTrendFor(marketTrend.marketName, marketTrend.marketId, 6)
 
         timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
         estimatedPrice = estimateValue(timeX,
@@ -218,7 +218,7 @@ def splitMarkets():
 
 
 def placeSellOrder(marketName, marketId, quantity):
-    marketTrend = getMarketTrendFor(marketName, marketId, 5)
+    marketTrend = getMarketTrendFor(marketName, marketId, 6)
     timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
     estimatedPrice = estimateValue(timeX,
                                    marketTrend.m, marketTrend.n,
@@ -226,7 +226,11 @@ def placeSellOrder(marketName, marketId, quantity):
                                    marketTrend.minY, marketTrend.scalingFactorY)
     normalizedEstimatedPrice = float(estimatedPrice) / 100000000
     sellPrice = normalizedEstimatedPrice + marketTrend.std
-    cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, sellPrice)
+
+    if quantity * sellPrice >= 0.00000010:
+        cryptsyClient.placeSellOrder(marketTrend.marketId, quantity, sellPrice)
+    else:
+        print "Order is less than 0.00000010: {}".format(quantity * sellPrice)
 
 
 def main(argv):
