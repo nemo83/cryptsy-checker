@@ -8,7 +8,7 @@ from pymongo import MongoClient
 
 from CryptsyPy import CryptsyPy, loadCryptsyMarketData
 
-
+FEE = 0.0025
 BASE_STAKE = 0.001
 MINIMUM_AMOUNT_TO_INVEST = 0.0005
 
@@ -94,7 +94,7 @@ def investBTC(btcBalance, activeMarkets, marketData):
 
     marketTrends, marketIds = getMarketTrends(inactiveBtcMarkets, marketData)
 
-    sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 2 * (x.avg * 0.0025),
+    sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 4 * (x.avg * FEE),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLast(2)[:4]
@@ -143,7 +143,7 @@ def investBTC(btcBalance, activeMarkets, marketData):
 
         buyPrice = normalizedEstimatedPrice - marketTrend.std
 
-        quantity = calculateQuantity(amountToInvest, 0.0025, buyPrice)
+        quantity = calculateQuantity(amountToInvest, FEE, buyPrice)
 
         responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, buyPrice)
         if apiCallSucceded:
