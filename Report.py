@@ -19,13 +19,12 @@ def main(argv):
     global cryptsyclient
     cryptsyclient = CryptsyPy(public, private)
 
-    tradeStats = cryptsyclient.getAllTradesInTheLast(2)
-    print tradeStats
+    tradeStats = cryptsyclient.getAllTradesInTheLast(5)
+
+    print "Best markets:"
     filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Buy'] > 0, tradeStats)
     sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
                               reverse=True)
-
-    print "Best markets:"
     for tradeStat in sortedTradeStats:
         print "MarketId: {}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat,
                                                                  tradeStats[tradeStat]['Sell'],
@@ -33,7 +32,21 @@ def main(argv):
                                                                  tradeStats[tradeStat]['Sell'] - tradeStats[tradeStat][
                                                                      'Buy'])
 
-
+    print "Best markets (Fee Inc):"
+    filteredTradeStats = filter(
+        lambda x: tradeStats[x]['Sell'] > (tradeStats[x]['Buy'] + tradeStats[x]['Fee']) > 0 and tradeStats[x][
+            'Buy'] > 0,
+        tradeStats)
+    sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
+                              reverse=True)
+    for tradeStat in sortedTradeStats:
+        print "MarketId: {}, Sell: {}, Buy: {}, Fee: {}, Earn: {}".format(tradeStat,
+                                                                          tradeStats[tradeStat]['Sell'],
+                                                                          tradeStats[tradeStat]['Buy'],
+                                                                          tradeStats[tradeStat]['Fee'],
+                                                                          tradeStats[tradeStat]['Sell'] -
+                                                                          tradeStats[tradeStat][
+                                                                              'Buy'] - tradeStats[tradeStat]['Fee'])
 
     print "\nWorst markets:"
     filteredTradeStats = filter(lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Buy'], tradeStats)
@@ -44,6 +57,19 @@ def main(argv):
                                                                  tradeStats[tradeStat]['Buy'],
                                                                  tradeStats[tradeStat]['Sell'] - tradeStats[tradeStat][
                                                                      'Buy'])
+
+    print "\nWorst markets (Fee Inc):"
+    filteredTradeStats = filter(lambda x: 0 < tradeStats[x]['Sell'] < (tradeStats[x]['Buy'] + tradeStats[x]['Fee']),
+                                tradeStats)
+    sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'])
+    for tradeStat in sortedTradeStats:
+        print "MarketId: {}, Sell: {}, Buy: {}, Fee: {}, Earn: {}".format(tradeStat,
+                                                                          tradeStats[tradeStat]['Sell'],
+                                                                          tradeStats[tradeStat]['Buy'],
+                                                                          tradeStats[tradeStat]['Fee'],
+                                                                          tradeStats[tradeStat]['Sell'] -
+                                                                          tradeStats[tradeStat][
+                                                                              'Buy'], tradeStats[tradeStat]['Fee'])
 
 
 def getEnv(argv):
