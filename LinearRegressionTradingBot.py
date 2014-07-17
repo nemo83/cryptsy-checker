@@ -88,7 +88,7 @@ def getMarketTrends(filteredBtcMarkets, marketDetails):
 def investBTC(btcBalance, activeMarkets, marketData):
     marketNames = [market for market in marketData]
 
-    btcMarketNames = filter(lambda x: 'BTC' in x, marketNames)
+    btcMarketNames = filter(lambda x: 'BTC' in x and 'Points' not in x, marketNames)
 
     inactiveBtcMarkets = filter(lambda x: marketData[x]['marketid'] not in activeMarkets, btcMarketNames)
 
