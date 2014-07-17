@@ -124,7 +124,7 @@ def investBTC(btcBalance, activeMarkets, marketData):
 
         if marketTrend.marketId in userMarketIds:
             # desiredAmountToInvest = BASE_STAKE * 3
-            desiredAmountToInvest = BASE_STAKE * 3
+            desiredAmountToInvest = BASE_STAKE
         elif marketTrend.marketId in bestPerformingMarkets[:2]:
             desiredAmountToInvest = BASE_STAKE * 3
         elif marketTrend.marketId in bestPerformingMarkets[2:]:
