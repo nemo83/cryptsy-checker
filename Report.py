@@ -19,7 +19,7 @@ def main(argv):
     global cryptsyclient
     cryptsyclient = CryptsyPy(public, private)
 
-    tradeStats = cryptsyclient.getAllTradesInTheLast(5)
+    tradeStats = cryptsyclient.getAllTradesInTheLast(3)
 
     print "Best markets:"
     filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Buy'] > 0, tradeStats)

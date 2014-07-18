@@ -9,7 +9,7 @@ from pymongo import MongoClient
 from CryptsyPy import CryptsyPy, loadCryptsyMarketData
 
 FEE = 0.0025
-BASE_STAKE = 0.001
+BASE_STAKE = 0.0005
 MINIMUM_AMOUNT_TO_INVEST = 0.0005
 
 cryptsyClient = None
@@ -41,17 +41,18 @@ def getMarketTrends(filteredBtcMarkets, marketDetails):
     marketTrends = []
     marketIds = []
     for marketName in filteredBtcMarkets:
-        timeStart = date.today() - timedelta(days=1)
+        timeStart = datetime.now() - timedelta(days=1, hours=5)
 
         cryptoCurrencyDataSamples = mongoMarketsCollection.find(
-            {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d")}})
+            {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d %H:%M:%S")}})
 
         tradeData = [(cryptoCurrencySample['lasttradetime'], cryptoCurrencySample['lasttradeprice']) for
                      cryptoCurrencySample in cryptoCurrencyDataSamples]
 
         uniqueTradeData = set(tradeData)
 
-        if len(uniqueTradeData) < 200:
+        if len(uniqueTradeData) < 150:
+            print "Excluding {}, not enough trading samples ({})".format(marketName, len(uniqueTradeData))
             continue
 
         times = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
@@ -199,8 +200,8 @@ def initCryptsyClient():
 
 def initMongoClient():
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection
-    # mongoClient = MongoClient(host="192.168.1.29")
-    mongoClient = MongoClient()
+    mongoClient = MongoClient(host="192.168.1.29")
+    # mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
