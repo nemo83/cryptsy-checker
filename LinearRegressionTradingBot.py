@@ -335,4 +335,7 @@ def getEnv(argv):
 
 
 if __name__ == "__main__":
+    starttime = datetime.now()
     main(sys.argv[1:])
+    elapsed = datetime.now() - starttime
+    print "Execution took: {}".format(elapsed.seconds)

@@ -16,7 +16,6 @@ def loadCryptsyMarketData():
     success = cryptsyMarketData['success']
     if success != 1:
         print "Failed to retrieve Markets"
-        exit(-1)
     return cryptsyMarketData['return']['markets']
 
 
