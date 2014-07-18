@@ -1,4 +1,4 @@
-from datetime import date, timedelta, datetime
+from datetime import timedelta, datetime
 import getopt
 import sys
 from time import sleep
@@ -42,6 +42,13 @@ def getMarketTrends(filteredBtcMarkets, marketDetails):
     marketIds = []
     for marketName in filteredBtcMarkets:
         timeStart = datetime.now() - timedelta(days=1, hours=5)
+
+        numTrades = mongoMarketsCollection.find(
+            {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d %H:%M:%S")}}).count()
+
+        if numTrades < 150:
+            print "Excluding {}, not enough trading samples on mongo ({})".format(marketName, numTrades)
+            continue
 
         cryptoCurrencyDataSamples = mongoMarketsCollection.find(
             {"name": marketName, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d %H:%M:%S")}})
