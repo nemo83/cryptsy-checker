@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime
 import getopt
 import sys
+import os
 from time import sleep
 
 from pymongo import MongoClient
@@ -121,6 +122,12 @@ def investBTC(btcBalance, activeMarkets, markets):
 
         quantity = calculateQuantity(amountToInvest, FEE, buyPrice)
 
+        if buyPrice <= 0.0 or quantity <= 0.0:
+            print "Attempting to buy: {} {}, at price: {} - Order will not be placed.".format(quantity,
+                                                                                              marketTrend.marketName,
+                                                                                              buyPrice)
+            continue
+
         responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, buyPrice)
         if apiCallSucceded:
             btcBalance -= amountToInvest
@@ -190,8 +197,6 @@ def placeSellOrder(marketName, marketId, quantity):
 
 
 def main(argv):
-    print "Started."
-
     getEnv(argv)
 
     initCryptsyClient()
@@ -249,6 +254,19 @@ def getEnv(argv):
 
 if __name__ == "__main__":
     starttime = datetime.now()
+    print "Started at {}".format(starttime)
+    lock_filename = "bot.lock"
+    if os.path.isfile(lock_filename):
+        print "Bot already running. Exiting..."
+        sys.exit(0)
+
+    lock_file = open(lock_filename, "w+")
+    lock_file.close()
+
     main(sys.argv[1:])
     elapsed = datetime.now() - starttime
+
+    print "Finished at {}".format(datetime.now())
     print "Execution took: {}".format(elapsed.seconds)
+
+    os.remove(lock_filename)
