@@ -23,6 +23,7 @@ class CryptsyPy:
     def __init__(self, public, private):
         self.public = public
         self.private = private
+        self.markets = None
 
     def makeAPIcall(self, requestParameters):
         url = 'https://api.cryptsy.com/api'
@@ -162,4 +163,13 @@ class CryptsyPy:
         postData = "method={}&orderid={}&nonce={}".format("cancelorder", orderid, int(time.time()))
         return self.makeAPIcall(postData)
 
+    def getMarkets(self):
+        if self.markets is None:
+            postData = "method={}&nonce={}".format("getmarkets", int(time.time()))
+            marketData, apiCallSucceded = self.makeAPIcall(postData)
+            self.markets = {}
+            if apiCallSucceded:
+                for market in marketData:
+                    self.markets[market['label']] = market['marketid']
+        return self.markets
 

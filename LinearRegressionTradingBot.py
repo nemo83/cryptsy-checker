@@ -5,7 +5,7 @@ from time import sleep
 
 from pymongo import MongoClient
 
-from CryptsyPy import CryptsyPy, loadCryptsyMarketData
+from CryptsyPy import CryptsyPy
 from CryptsyMongo import CryptsyMongo
 
 FEE = 0.0025
@@ -39,27 +39,27 @@ def calculateQuantity(amountToInvest, fee, buyPrice):
     return (amountToInvest - amountToInvest * fee) / buyPrice
 
 
-def getMarketTrends(filteredBtcMarkets, marketDetails):
+def getMarketTrends(filteredBtcMarkets, markets):
     marketTrends = []
     marketIds = []
     for marketName in filteredBtcMarkets:
         marketTrend = cryptsy_mongo.getRecentMarketTrend(market_name=marketName,
-                                                         market_id=marketDetails[marketName]['marketid'])
+                                                         market_id=markets[marketName])
         if marketTrend.m != 0.0:
             marketTrends.append(marketTrend)
-            marketIds.append(marketDetails[marketName]['marketid'])
+            marketIds.append(markets[marketName])
 
     return marketTrends, marketIds
 
 
-def investBTC(btcBalance, activeMarkets, marketData):
-    marketNames = [market for market in marketData]
+def investBTC(btcBalance, activeMarkets, markets):
+    marketNames = [market for market in markets]
 
     btcMarketNames = filter(lambda x: 'BTC' in x and 'Points' not in x, marketNames)
 
-    inactiveBtcMarkets = filter(lambda x: marketData[x]['marketid'] not in activeMarkets, btcMarketNames)
+    inactiveBtcMarkets = filter(lambda x: markets[x] not in activeMarkets, btcMarketNames)
 
-    marketTrends, marketIds = getMarketTrends(inactiveBtcMarkets, marketData)
+    marketTrends, marketIds = getMarketTrends(inactiveBtcMarkets, markets)
 
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 4 * (x.avg * FEE),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
@@ -132,11 +132,11 @@ def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
     return y_ * scalingFactorY + minY
 
 
-def getMarketTrendFor(marketName, marketId, lastXHours):
+def getMarketTrendFor(marketName, marketId, lastXHours, reliable=True):
     return cryptsy_mongo.calculateMarketTrend(market_name=marketName,
                                               market_id=marketId,
                                               interval=timedelta(hours=5 + lastXHours),
-                                              check_num_samples=False)
+                                              check_num_samples=reliable)
 
 
 def initCryptsyClient():
@@ -171,7 +171,7 @@ def splitMarkets():
 
 
 def placeSellOrder(marketName, marketId, quantity):
-    marketTrend = getMarketTrendFor(marketName, marketId, 6)
+    marketTrend = getMarketTrendFor(marketName, marketId, 6, reliable=False)
     if marketTrend.m == 0.0:
         print "No sell order for market {} will be placed. Not enough sale info.".format(marketName)
         return
@@ -211,7 +211,7 @@ def main(argv):
     for balance in balanceList:
         print "{}, {}".format(balance[0], balance[1])
 
-    marketData = loadCryptsyMarketData()
+    markets = cryptsyClient.getMarkets()
 
     btcBalance = 0.0
     for balance in balanceList:
@@ -219,11 +219,11 @@ def main(argv):
             btcBalance = balance[1]
         else:
             marketName = "{}/BTC".format(balance[0])
-            marketId = marketData[marketName]['marketid']
+            marketId = markets[marketName]
             placeSellOrder(marketName, marketId, balance[1])
 
     if btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
-        investBTC(btcBalance, activeMarkets, marketData)
+        investBTC(btcBalance, activeMarkets, markets)
 
     print "Complete"
 
