@@ -170,6 +170,7 @@ class CryptsyPy:
             self.markets = {}
             if apiCallSucceded:
                 for market in marketData:
-                    self.markets[market['label']] = market['marketid']
+                    market_name = market['label'].replace('\\', '')
+                    self.markets[market_name] = market['marketid']
         return self.markets
 
