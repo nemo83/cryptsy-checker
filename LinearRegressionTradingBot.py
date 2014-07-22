@@ -91,15 +91,13 @@ def investBTC(btcBalance, activeMarkets, markets):
             break
 
         if marketTrend.marketId in userMarketIds:
-            desiredAmountToInvest = BASE_STAKE * 2
-        elif marketTrend.marketId in bestPerformingMarkets[0:1]:
-            desiredAmountToInvest = BASE_STAKE * 5
-        elif marketTrend.marketId in bestPerformingMarkets[1:2]:
-            desiredAmountToInvest = BASE_STAKE * 4
-        elif marketTrend.marketId in bestPerformingMarkets[2:3]:
-            desiredAmountToInvest = BASE_STAKE * 4
+            # desiredAmountToInvest = BASE_STAKE * 3
+            desiredAmountToInvest = BASE_STAKE
+        elif marketTrend.marketId in bestPerformingMarkets[:3]:
+            desiredAmountToInvest = BASE_STAKE * 3
         elif marketTrend.marketId in bestPerformingMarkets[3:]:
             desiredAmountToInvest = BASE_STAKE * 2
+
         else:
             desiredAmountToInvest = BASE_STAKE
 
