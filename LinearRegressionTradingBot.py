@@ -229,10 +229,12 @@ def main(argv):
             marketId = markets[marketName]
             placeSellOrder(marketName, marketId, balance[1])
 
-    print "sell only? {}".format(sell_only)
-
-    if btcBalance >= MINIMUM_AMOUNT_TO_INVEST and not sell_only:
+    if sell_only:
+        print "Sell only flag active. No buy trade will be open. Returning..."
+    elif btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
         investBTC(btcBalance, activeMarkets, markets)
+    else:
+        print "Not enough funds. Exiting"
 
     print "Complete"
 
