@@ -13,6 +13,8 @@ FEE = 0.0025
 BASE_STAKE = 0.0005
 MINIMUM_AMOUNT_TO_INVEST = 0.0005
 
+sell_only = False
+
 cryptsyClient = None
 mongoClient = None
 mongoCryptsyDb = None
@@ -227,7 +229,9 @@ def main(argv):
             marketId = markets[marketName]
             placeSellOrder(marketName, marketId, balance[1])
 
-    if btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
+    print "sell only? {}".format(sell_only)
+
+    if btcBalance >= MINIMUM_AMOUNT_TO_INVEST and not sell_only:
         investBTC(btcBalance, activeMarkets, markets)
 
     print "Complete"
@@ -237,8 +241,9 @@ def getEnv(argv):
     global public
     global private
     global userMarketIds
+    global sell_only
     try:
-        opts, args = getopt.getopt(argv, "h", ["help", "public=", "private=", "marketIds="])
+        opts, args = getopt.getopt(argv, "h", ["help", "public=", "private=", "marketIds=", "sellOnly"])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -250,6 +255,8 @@ def getEnv(argv):
             private = arg
         elif opt == "--marketIds":
             userMarketIds = arg.split(",")
+        elif opt == "--sellOnly":
+            sell_only = True
 
 
 if __name__ == "__main__":
