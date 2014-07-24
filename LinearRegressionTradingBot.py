@@ -272,7 +272,11 @@ if __name__ == "__main__":
     lock_file = open(lock_filename, "w+")
     lock_file.close()
 
-    main(sys.argv[1:])
+    try:
+        main(sys.argv[1:])
+    except:
+        print "Unexpected error: {}".format(sys.exc_info()[0])
+
     elapsed = datetime.now() - starttime
 
     print "Finished at {}".format(datetime.now())
