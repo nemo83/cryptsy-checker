@@ -158,13 +158,13 @@ def initCryptsyClient():
 
 def initMongoClient():
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection, cryptsy_mongo
-    mongoClient = MongoClient(host="192.168.1.29")
-    # mongoClient = MongoClient()
+    # mongoClient = MongoClient(host="192.168.1.29")
+    mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
-    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
-    # cryptsy_mongo = CryptsyMongo()
+    # cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    cryptsy_mongo = CryptsyMongo()
 
 
 def splitMarkets(markets):
@@ -190,8 +190,13 @@ def splitMarkets(markets):
             sellPrice = normalizedEstimatedPrice + market_trend.std
 
             if float(toEightDigit(sellPrice)) != float(openOrder[4]):
+                print "Cancelling order for {} market. Old Price: {}, New Price: {}".format(market_name, openOrder[4],
+                                                                                            sellPrice)
                 ordersToBeCancelled.append(openOrder[1])
                 activeMarkets.append(openOrder[0])
+            else:
+                print "Sell order expired but not deleted for {} market. Old Price: {}, New Price: {}".format(
+                    market_name, openOrder[4], sellPrice)
         else:
             activeMarkets.append(openOrder[0])
     return activeMarkets, ordersToBeCancelled
