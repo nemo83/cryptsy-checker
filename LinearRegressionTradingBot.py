@@ -31,11 +31,11 @@ CRYPTSY_HOURS_DIFFERENCE = 4
 
 
 def toCryptsyServerTime(time):
-    return time + timedelta(hours=4)
+    return time + timedelta(hours=CRYPTSY_HOURS_DIFFERENCE)
 
 
 def fromCryptsyServerTime(time):
-    return time - timedelta(hours=4)
+    return time - timedelta(hours=CRYPTSY_HOURS_DIFFERENCE)
 
 
 def normalizeValues(values):
