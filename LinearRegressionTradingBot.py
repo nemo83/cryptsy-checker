@@ -185,7 +185,7 @@ def splitMarkets(markets):
         openMarketNormalized = fromCryptsyServerTime(datetime.strptime(openOrder[2], '%Y-%m-%d %H:%M:%S'))
         if openOrder[3] == 'Buy' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
             ordersToBeCancelled.append(openOrder[1])
-        elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(minutes=30)) < datetime.now():
+        elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
 
             market_name = next((market_name for market_name in markets if (markets[market_name] == openOrder[0])), None)
 
@@ -197,9 +197,9 @@ def splitMarkets(markets):
                                            market_trend.minX, market_trend.scalingFactorX,
                                            market_trend.minY, market_trend.scalingFactorY)
             normalizedEstimatedPrice = float(estimatedPrice) / 100000000
-            sellPrice = normalizedEstimatedPrice + market_trend.std
+            sellPrice = toEightDigit(normalizedEstimatedPrice + market_trend.std)
 
-            if float(toEightDigit(sellPrice)) != float(openOrder[4]):
+            if float(sellPrice) != float(openOrder[4]):
                 print "Cancelling order for {} market. Old Price: {}, New Price: {}".format(market_name, openOrder[4],
                                                                                             sellPrice)
                 ordersToBeCancelled.append(openOrder[1])
