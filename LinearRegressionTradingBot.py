@@ -6,7 +6,7 @@ from time import sleep
 
 from pymongo import MongoClient
 
-from CryptsyPy import CryptsyPy
+from CryptsyPy import CryptsyPy, toEightDigit
 from CryptsyMongo import CryptsyMongo
 
 FEE = 0.0025
@@ -164,9 +164,10 @@ def initMongoClient():
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
     cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    # cryptsy_mongo = CryptsyMongo()
 
 
-def splitMarkets():
+def splitMarkets(markets):
     allActiveOrders = cryptsyClient.getAllActiveOrders()
     activeMarkets = []
     ordersToBeCancelled = []
@@ -174,9 +175,23 @@ def splitMarkets():
         openMarketNormalized = datetime.strptime(openOrder[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=5)
         if openOrder[3] == 'Buy' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
             ordersToBeCancelled.append(openOrder[1])
-        elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
-            ordersToBeCancelled.append(openOrder[1])
-            activeMarkets.append(openOrder[0])
+        elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(minutes=30)) < datetime.now():
+
+            market_name = next((market_name for market_name in markets if (markets[market_name] == openOrder[0])), None)
+
+            market_trend = getMarketTrendFor(market_name, openOrder[0], 6, False)
+
+            timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
+            estimatedPrice = estimateValue(timeX,
+                                           market_trend.m, market_trend.n,
+                                           market_trend.minX, market_trend.scalingFactorX,
+                                           market_trend.minY, market_trend.scalingFactorY)
+            normalizedEstimatedPrice = float(estimatedPrice) / 100000000
+            sellPrice = normalizedEstimatedPrice + market_trend.std
+
+            if float(toEightDigit(sellPrice)) != float(openOrder[4]):
+                ordersToBeCancelled.append(openOrder[1])
+                activeMarkets.append(openOrder[0])
         else:
             activeMarkets.append(openOrder[0])
     return activeMarkets, ordersToBeCancelled
@@ -208,20 +223,20 @@ def main(argv):
 
     initMongoClient()
 
-    activeMarkets, ordersToBeCancelled = splitMarkets()
+    markets = cryptsyClient.getMarkets()
+
+    activeMarkets, ordersToBeCancelled = splitMarkets(markets)
 
     for orderToBeCancelled in ordersToBeCancelled:
         cryptsyClient.cancelOrder(orderToBeCancelled)
 
-    # Wait for cancellations to take place
+        # Wait for cancellations to take place
     sleep(5)
 
     balanceList = filter(lambda x: x[0] != 'Points', cryptsyClient.getInfo())
     print "Current Balance:"
     for balance in balanceList:
         print "{}, {}".format(balance[0], balance[1])
-
-    markets = cryptsyClient.getMarkets()
 
     btcBalance = 0.0
     for balance in balanceList:

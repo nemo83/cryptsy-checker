@@ -19,6 +19,10 @@ def loadCryptsyMarketData():
     return cryptsyMarketData['return']['markets']
 
 
+def toEightDigit(value):
+    return "%.8f" % round(value, 8)
+
+
 class CryptsyPy:
     def __init__(self, public, private):
         self.public = public
@@ -61,7 +65,8 @@ class CryptsyPy:
         buyMarkets = []
         if apiCallSucceded:
             for order in orders:
-                buyMarkets.append((order['marketid'], order['orderid'], order['created'], order['ordertype']))
+                buyMarkets.append(
+                    (order['marketid'], order['orderid'], order['created'], order['ordertype'], order['price']))
 
         return buyMarkets
 
@@ -130,9 +135,6 @@ class CryptsyPy:
 
         return sortedTradeStats
 
-    def toEightDigit(self, value):
-        return "%.8f" % round(value, 8)
-
     def cancelAllOrders(self):
         postData = "method={}&nonce={}".format("cancelallorders", int(time.time()))
         self.makeAPIcall(postData)
@@ -140,9 +142,9 @@ class CryptsyPy:
     def placeSellOrder(self, marketId, quantity, price):
         postData = "method={}&marketid={}&ordertype=Sell&quantity={}&price={}&nonce={}".format("createorder",
                                                                                                marketId,
-                                                                                               self.toEightDigit(
+                                                                                               toEightDigit(
                                                                                                    quantity),
-                                                                                               self.toEightDigit(
+                                                                                               toEightDigit(
                                                                                                    price),
                                                                                                int(time.time()))
         self.makeAPIcall(postData)
@@ -150,9 +152,9 @@ class CryptsyPy:
     def placeBuyOrder(self, marketId, quantity, price):
         postData = "method={}&marketid={}&ordertype=Buy&quantity={}&price={}&nonce={}".format("createorder",
                                                                                               marketId,
-                                                                                              self.toEightDigit(
+                                                                                              toEightDigit(
                                                                                                   quantity),
-                                                                                              self.toEightDigit(
+                                                                                              toEightDigit(
                                                                                                   price),
                                                                                               int(time.time()))
         return self.makeAPIcall(postData)
