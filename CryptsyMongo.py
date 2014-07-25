@@ -7,7 +7,7 @@ epoch = datetime.utcfromtimestamp(0)
 
 
 class CryptsyMongo:
-    def __init__(self, host='127.0.0.1', timezone_delta=timedelta(hours=5)):
+    def __init__(self, host='127.0.0.1', timezone_delta=timedelta(hours=4)):
         self.host = host
         self.timezone_delta = timezone_delta
         self.mongo_client = MongoClient(host=host)
@@ -44,7 +44,7 @@ class CryptsyMongo:
         return market_trend
 
 
-    def calculateMarketTrend(self, market_name, market_id, interval=timedelta(days=1, hours=5),
+    def calculateMarketTrend(self, market_name, market_id, interval=timedelta(days=1, hours=4),
                              check_num_samples=True):
 
         timeStart = datetime.now() - interval
