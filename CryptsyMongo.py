@@ -52,7 +52,7 @@ class CryptsyMongo:
         numTrades = self.markets_collection.find(
             {"name": market_name, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d %H:%M:%S")}}).count()
 
-        if numTrades < 50:
+        if numTrades < 100:
             print "Low num samples for {} on mongo ({})".format(market_name, numTrades)
             if numTrades == 0 or check_num_samples:
                 return MarketTrend(marketName=market_name, marketId=market_id)
@@ -65,7 +65,7 @@ class CryptsyMongo:
 
         uniqueTradeData = set(tradeData)
 
-        if len(uniqueTradeData) < 50:
+        if len(uniqueTradeData) < 75:
             print "Low num samples for {} ({})".format(market_name, len(uniqueTradeData))
             if numTrades == 0 or check_num_samples:
                 return MarketTrend(marketName=market_name, marketId=market_id)
