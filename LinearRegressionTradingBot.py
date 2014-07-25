@@ -118,6 +118,10 @@ def investBTC(btcBalance, activeMarkets, markets):
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
+        if marketTrend.m == 0.0:
+            print "Market {} has default 0 m for the last 24h, no order will be open".format(marketTrend.marketName)
+            continue
+
         buyMarketTrend = getMarketTrendFor(marketTrend.marketName, marketTrend.marketId, 6)
 
         if buyMarketTrend.m == 0.0:
