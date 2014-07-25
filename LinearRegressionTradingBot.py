@@ -27,6 +27,16 @@ private = ''
 userMarketIds = []
 epoch = datetime.utcfromtimestamp(0)
 
+CRYPTSY_HOURS_DIFFERENCE = 4
+
+
+def toCryptsyServerTime(time):
+    return time + timedelta(hours=4)
+
+
+def fromCryptsyServerTime(time):
+    return time - timedelta(hours=4)
+
 
 def normalizeValues(values):
     def normalize(value, min, scalingFactor):
@@ -114,7 +124,7 @@ def investBTC(btcBalance, activeMarkets, markets):
             print "Market {} has default 0 m, no order will be open".format(marketTrend.marketName)
             continue
 
-        timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
+        timeX = (toCryptsyServerTime(datetime.now()) - epoch).total_seconds()
 
         estimatedPrice = estimateValue(timeX,
                                        buyMarketTrend.m, buyMarketTrend.n,
@@ -147,7 +157,7 @@ def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
 def getMarketTrendFor(marketName, marketId, lastXHours, reliable=True):
     return cryptsy_mongo.calculateMarketTrend(market_name=marketName,
                                               market_id=marketId,
-                                              interval=timedelta(hours=5 + lastXHours),
+                                              interval=timedelta(hours=CRYPTSY_HOURS_DIFFERENCE + lastXHours),
                                               check_num_samples=reliable)
 
 
@@ -172,7 +182,7 @@ def splitMarkets(markets):
     activeMarkets = []
     ordersToBeCancelled = []
     for openOrder in allActiveOrders:
-        openMarketNormalized = datetime.strptime(openOrder[2], '%Y-%m-%d %H:%M:%S') + timedelta(hours=5)
+        openMarketNormalized = fromCryptsyServerTime(datetime.strptime(openOrder[2], '%Y-%m-%d %H:%M:%S'))
         if openOrder[3] == 'Buy' and (openMarketNormalized + timedelta(hours=1)) < datetime.now():
             ordersToBeCancelled.append(openOrder[1])
         elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(minutes=30)) < datetime.now():
@@ -181,7 +191,7 @@ def splitMarkets(markets):
 
             market_trend = getMarketTrendFor(market_name, openOrder[0], 6, False)
 
-            timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
+            timeX = (toCryptsyServerTime(datetime.now()) - epoch).total_seconds()
             estimatedPrice = estimateValue(timeX,
                                            market_trend.m, market_trend.n,
                                            market_trend.minX, market_trend.scalingFactorX,
@@ -207,7 +217,7 @@ def placeSellOrder(marketName, marketId, quantity):
     if marketTrend.m == 0.0:
         print "No sell order for market {} will be placed. Not enough sale info.".format(marketName)
         return
-    timeX = (datetime.now() - timedelta(hours=5) - epoch).total_seconds()
+    timeX = (toCryptsyServerTime(datetime.now()) - epoch).total_seconds()
     estimatedPrice = estimateValue(timeX,
                                    marketTrend.m, marketTrend.n,
                                    marketTrend.minX, marketTrend.scalingFactorX,
