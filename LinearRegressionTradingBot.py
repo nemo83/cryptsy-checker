@@ -74,7 +74,7 @@ def investBTC(btcBalance, activeMarkets, markets):
 
     marketTrends, marketIds = getMarketTrends(inactiveBtcMarkets, markets)
 
-    sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.0000001 and x.std > 4 * (x.avg * FEE),
+    sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.0000005 and x.std > 4 * (x.avg * FEE),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLastFeeIncluded(3)[:6]
@@ -172,13 +172,13 @@ def initCryptsyClient():
 
 def initMongoClient():
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection, cryptsy_mongo
-    # mongoClient = MongoClient(host="192.168.1.29")
-    mongoClient = MongoClient()
+    mongoClient = MongoClient(host="192.168.1.29")
+    # mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
-    # cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
-    cryptsy_mongo = CryptsyMongo()
+    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    # cryptsy_mongo = CryptsyMongo()
 
 
 def splitMarkets(markets):
@@ -249,7 +249,6 @@ def main(argv):
     for orderToBeCancelled in ordersToBeCancelled:
         cryptsyClient.cancelOrder(orderToBeCancelled)
 
-        # Wait for cancellations to take place
     sleep(5)
 
     balanceList = filter(lambda x: x[0] != 'Points', cryptsyClient.getInfo())

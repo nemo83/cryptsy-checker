@@ -43,7 +43,6 @@ class CryptsyMongo:
 
         return market_trend
 
-
     def calculateMarketTrend(self, market_name, market_id, interval=timedelta(days=1, hours=4),
                              check_num_samples=True):
 
