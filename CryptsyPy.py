@@ -8,6 +8,8 @@ import simplejson
 
 import requests
 
+CRYPTSY_HOURS_DIFFERENCE = 4
+
 
 def loadCryptsyMarketData():
     cryptsyApi = "http://pubapi.cryptsy.com/api.php?method=marketdatav2"
@@ -21,6 +23,14 @@ def loadCryptsyMarketData():
 
 def toEightDigit(value):
     return "%.8f" % round(value, 8)
+
+
+def toCryptsyServerTime(time):
+    return time - timedelta(hours=CRYPTSY_HOURS_DIFFERENCE)
+
+
+def fromCryptsyServerTime(time):
+    return time + timedelta(hours=CRYPTSY_HOURS_DIFFERENCE)
 
 
 class CryptsyPy:

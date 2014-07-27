@@ -18,13 +18,13 @@ class CryptsyMongo:
     def truncate_market_trend_collection(self):
         self.market_trend_collection.remove()
 
-    def getRecentMarketTrend(self, market_name, market_id, timedelta=timedelta(hours=1), force_update=False):
-        time_start = datetime.now() - timedelta
+    def getRecentMarketTrend(self, market_name, market_id, timedelta=timedelta(hours=1)):
+        time_start = datetime.utcnow() - timedelta
 
         market_trends = self.market_trend_collection.find({"marketName": market_name}).sort('time', -1).limit(1)
 
-        if not force_update and market_trends.count() > 0 and time_start < datetime.strptime(market_trends[0]['time'],
-                                                                                             "%Y-%m-%d %H:%M:%S"):
+        if market_trends.count() > 0 and time_start < datetime.strptime(market_trends[0]['time'],
+                                                                        "%Y-%m-%d %H:%M:%S"):
             market_trend = MarketTrend(marketName=market_trends[0]['marketName'],
                                        marketId=int(market_trends[0]['marketId']),
                                        m=float(market_trends[0]['m']),
@@ -34,27 +34,19 @@ class CryptsyMongo:
                                        minY=float(market_trends[0]['minY']),
                                        scalingFactorY=float(market_trends[0]['scalingFactorY']),
                                        avg=float(market_trends[0]['avg']),
-                                       std=float(market_trends[0]['std']))
+                                       std=float(market_trends[0]['std']),
+                                       num_samples=market_trends[0]['num_samples'])
         else:
             market_trend = self.calculateMarketTrend(market_name, market_id)
             market_trend_dict = market_trend.__dict__
-            market_trend_dict['time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            market_trend_dict['time'] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
             self.market_trend_collection.insert(market_trend_dict)
 
         return market_trend
 
-    def calculateMarketTrend(self, market_name, market_id, interval=timedelta(days=1, hours=4),
-                             check_num_samples=True):
+    def calculateMarketTrend(self, market_name, market_id, interval=timedelta(days=1, hours=4)):
 
-        timeStart = datetime.now() - interval
-
-        numTrades = self.markets_collection.find(
-            {"name": market_name, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d %H:%M:%S")}}).count()
-
-        if numTrades < 100:
-            print "Low num samples for {} on mongo ({})".format(market_name, numTrades)
-            if numTrades == 0 or check_num_samples:
-                return MarketTrend(marketName=market_name, marketId=market_id)
+        timeStart = datetime.utcnow() - interval
 
         cryptoCurrencyDataSamples = self.markets_collection.find(
             {"name": market_name, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d %H:%M:%S")}})
@@ -64,10 +56,7 @@ class CryptsyMongo:
 
         uniqueTradeData = set(tradeData)
 
-        if len(uniqueTradeData) < 75:
-            print "Low num samples for {} ({})".format(market_name, len(uniqueTradeData))
-            if numTrades == 0 or check_num_samples:
-                return MarketTrend(marketName=market_name, marketId=market_id)
+        num_samples = len(uniqueTradeData)
 
         times = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
                  for
@@ -92,14 +81,15 @@ class CryptsyMongo:
                                   minY=minPrice,
                                   scalingFactorY=priceScalingFactor,
                                   avg=numpy.average(prices),
-                                  std=numpy.std(prices))
+                                  std=numpy.std(prices),
+                                  num_samples=num_samples)
 
         return marketTrend
 
 
 class MarketTrend:
     def __init__(self, marketName, marketId, m=0.0, n=0.0, minX=0.0, scalingFactorX=0.0, minY=0.0, scalingFactorY=0.0,
-                 avg=0.0, std=0.0):
+                 avg=0.0, std=0.0, num_samples=0):
         self.marketName = marketName
         self.marketId = marketId
         self.m = m
@@ -112,9 +102,10 @@ class MarketTrend:
         self.std = std
         self.buy = avg - std
         self.sell = avg + std
+        self.num_samples = num_samples
 
     def __str__(self):
-        return "marketName: {}, id: {}, m: {}, n: {}, minX: {}, scalingFactorX: {}, minY: {}, scalingFactorY: {}, avg: {}, std: {}, buy: {}, sell: {}".format(
+        return "marketName: {}, id: {}, m: {}, n: {}, minX: {}, scalingFactorX: {}, minY: {}, scalingFactorY: {}, avg: {}, std: {}, buy: {}, sell: {}, num samples: {}".format(
             self.marketName,
             self.marketId,
             self.m,
@@ -125,8 +116,27 @@ class MarketTrend:
             self.scalingFactorY,
             self.std,
             self.buy,
-            self.sell
+            self.sell,
+            self.num_samples
         )
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+                and self.marketName == other.marketName
+                and self.marketId == other.marketId
+                and self.m == other.m
+                and self.n == other.n
+                and self.minX == other.minX
+                and self.scalingFactorX == other.scalingFactorX
+                and self.minY == other.minY
+                and self.scalingFactorY == other.scalingFactorY
+                and self.std == other.std
+                and self.buy == other.buy
+                and self.sell == other.sell
+                and self.num_samples == other.num_samples)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 
 def normalizeValues(values):
