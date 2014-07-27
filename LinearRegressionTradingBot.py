@@ -10,8 +10,8 @@ from CryptsyPy import CryptsyPy, toEightDigit, fromCryptsyServerTime, toCryptsyS
 from CryptsyMongo import CryptsyMongo
 
 FEE = 0.0025
-BASE_STAKE = 0.0004
-MINIMUM_AMOUNT_TO_INVEST = 0.0004
+BASE_STAKE = 0.00025
+MINIMUM_AMOUNT_TO_INVEST = 0.00025
 
 sell_only = False
 
@@ -54,7 +54,7 @@ def getMarketTrends(filteredBtcMarkets, markets):
             market_trend = cryptsy_mongo.calculateMarketTrend(marketName, markets[marketName])
             cryptsy_mongo.persistMarketTrend(market_trend)
 
-            if market_trend.num_samples >= 150:
+            if market_trend.num_samples >= 100:
                 market_trends.append(market_trend)
 
     market_trends += recent_market_trends
@@ -73,7 +73,7 @@ def investBTC(btcBalance, activeMarkets, markets):
 
     marketTrends, marketIds = getMarketTrends(inactiveBtcMarkets, markets)
 
-    sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.0000005 and x.std > 4 * (x.avg * FEE),
+    sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.0000002 and x.std > 4 * (x.avg * FEE),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
     bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLastFeeIncluded(3)
