@@ -77,7 +77,7 @@ def investBTC(btcBalance, activeMarkets, markets):
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.0000005 and x.std > 4 * (x.avg * FEE),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
-    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLastFeeIncluded(3)[:6]
+    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLastFeeIncluded(3)
 
     worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsInTheLastFeeIncluded(3)
 
