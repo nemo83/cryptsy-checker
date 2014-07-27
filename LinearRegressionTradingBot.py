@@ -229,6 +229,13 @@ def placeSellOrder(marketName, marketId, quantity):
         print "Order is less than 0.00000010: {}".format(quantity * sell_price)
 
 
+def cancelOrders(ordersToBeCancelled):
+    for orderToBeCancelled in ordersToBeCancelled:
+        cryptsyClient.cancelOrder(orderToBeCancelled)
+    if len(ordersToBeCancelled) > 0:
+        sleep(5)
+
+
 def main(argv):
     getEnv(argv)
 
@@ -240,10 +247,7 @@ def main(argv):
 
     activeMarkets, ordersToBeCancelled = splitMarkets(markets)
 
-    for orderToBeCancelled in ordersToBeCancelled:
-        cryptsyClient.cancelOrder(orderToBeCancelled)
-
-    sleep(5)
+    cancelOrders(ordersToBeCancelled)
 
     balanceList = filter(lambda x: x[0] != 'Points', cryptsyClient.getInfo())
     print "Current Balance:"
