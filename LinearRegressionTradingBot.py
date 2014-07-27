@@ -10,8 +10,8 @@ from CryptsyPy import CryptsyPy, toEightDigit, fromCryptsyServerTime, toCryptsyS
 from CryptsyMongo import CryptsyMongo
 
 FEE = 0.0025
-BASE_STAKE = 0.00025
-MINIMUM_AMOUNT_TO_INVEST = 0.00025
+BASE_STAKE = 0.0004
+MINIMUM_AMOUNT_TO_INVEST = 0.0004
 
 sell_only = False
 
