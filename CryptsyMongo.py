@@ -18,34 +18,35 @@ class CryptsyMongo:
     def truncate_market_trend_collection(self):
         self.market_trend_collection.remove()
 
-    def getRecentMarketTrend(self, market_name, market_id, timedelta=timedelta(hours=1)):
+    def getRecentMarketTrends(self, timedelta=timedelta(hours=1)):
         time_start = datetime.utcnow() - timedelta
 
-        market_trends = self.market_trend_collection.find({"marketName": market_name}).sort('time', -1).limit(1)
+        mongo_market_trends = self.market_trend_collection.find(
+            {"time": {"$gt": time_start.strftime("%Y-%m-%d %H:%M:%S")}})
 
-        if market_trends.count() > 0 and time_start < datetime.strptime(market_trends[0]['time'],
-                                                                        "%Y-%m-%d %H:%M:%S"):
-            market_trend = MarketTrend(marketName=market_trends[0]['marketName'],
-                                       marketId=int(market_trends[0]['marketId']),
-                                       m=float(market_trends[0]['m']),
-                                       n=float(market_trends[0]['n']),
-                                       minX=float(market_trends[0]['minX']),
-                                       scalingFactorX=float(market_trends[0]['scalingFactorX']),
-                                       minY=float(market_trends[0]['minY']),
-                                       scalingFactorY=float(market_trends[0]['scalingFactorY']),
-                                       avg=float(market_trends[0]['avg']),
-                                       std=float(market_trends[0]['std']),
-                                       num_samples=market_trends[0]['num_samples'])
-        else:
-            market_trend = self.calculateMarketTrend(market_name, market_id)
-            market_trend_dict = market_trend.__dict__
-            market_trend_dict['time'] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-            self.market_trend_collection.insert(market_trend_dict)
+        market_trends = []
 
-        return market_trend
+        for mongo_market_trend in mongo_market_trends:
+            market_trends.append(MarketTrend(marketName=mongo_market_trend['marketName'],
+                                             marketId=int(mongo_market_trend['marketId']),
+                                             m=float(mongo_market_trend['m']),
+                                             n=float(mongo_market_trend['n']),
+                                             minX=float(mongo_market_trend['minX']),
+                                             scalingFactorX=float(mongo_market_trend['scalingFactorX']),
+                                             minY=float(mongo_market_trend['minY']),
+                                             scalingFactorY=float(mongo_market_trend['scalingFactorY']),
+                                             avg=float(mongo_market_trend['avg']),
+                                             std=float(mongo_market_trend['std']),
+                                             num_samples=mongo_market_trend['num_samples']))
+
+        return market_trends
+
+    def persistMarketTrend(self, market_trend):
+        market_trend_dict = market_trend.__dict__
+        market_trend_dict['time'] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        self.market_trend_collection.insert(market_trend_dict)
 
     def calculateMarketTrend(self, market_name, market_id, interval=timedelta(days=1, hours=4)):
-
         timeStart = datetime.utcnow() - interval
 
         cryptoCurrencyDataSamples = self.markets_collection.find(
@@ -57,6 +58,9 @@ class CryptsyMongo:
         uniqueTradeData = set(tradeData)
 
         num_samples = len(uniqueTradeData)
+
+        if num_samples == 0:
+            return MarketTrend(market_name, market_id)
 
         times = [(datetime.strptime(tradeDataSample[0], '%Y-%m-%d %H:%M:%S') - epoch).total_seconds()
                  for

@@ -1,4 +1,6 @@
 import unittest
+from datetime import timedelta
+
 from CryptsyMongo import CryptsyMongo
 
 
@@ -26,6 +28,11 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertEqual(num_market_trend, 1)
 
         self.assertEqual(market_trend_1, market_trend_2)
+
+    def test_recent(self):
+        self.mongo_client.getRecentMarketTrend(market_name='LTC/BTC', market_id=3, timedelta=timedelta(minutes=1))
+        self.mongo_client.getRecentMarketTrend(market_name='DOGE/BTC', market_id=132, timedelta=timedelta(minutes=1))
+        self.mongo_client.getRecentMarketTrend(market_name='TEK/BTC', market_id=114, timedelta=timedelta(minutes=1))
 
 
 if __name__ == '__main__':

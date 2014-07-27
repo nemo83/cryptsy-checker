@@ -43,20 +43,28 @@ def calculateQuantity(amountToInvest, fee, buyPrice):
 
 
 def getMarketTrends(filteredBtcMarkets, markets):
-    marketTrends = []
-    marketIds = []
-    for marketName in filteredBtcMarkets:
-        marketTrend = cryptsy_mongo.getRecentMarketTrend(market_name=marketName,
-                                                         market_id=markets[marketName])
-        if marketTrend.m != 0.0:
-            marketTrends.append(marketTrend)
-            marketIds.append(markets[marketName])
+    recent_market_trends = cryptsy_mongo.getRecentMarketTrends()
 
-    return marketTrends, marketIds
+    recent_market_trend_names = [recent_market_trend.marketName for recent_market_trend in recent_market_trends]
+
+    market_trends = []
+
+    for marketName in filteredBtcMarkets:
+        if marketName not in recent_market_trend_names:
+            market_trend = cryptsy_mongo.calculateMarketTrend(marketName, markets[marketName])
+            cryptsy_mongo.persistMarketTrend(market_trend)
+
+            if market_trend.num_samples >= 150:
+                market_trends.append(market_trend)
+
+    market_trends += recent_market_trends
+
+    marketIds = [market_trend.marketId for market_trend in market_trends]
+
+    return market_trends, marketIds
 
 
 def investBTC(btcBalance, activeMarkets, markets):
-
     market_names = [market for market in markets]
 
     btcMarketNames = filter(lambda x: 'BTC' in x and 'Points' not in x, market_names)
@@ -109,14 +117,11 @@ def investBTC(btcBalance, activeMarkets, markets):
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
-        if marketTrend.m == 0.0:
-            print "Market {} has default 0 m for the last 24h, no order will be open".format(marketTrend.marketName)
-            continue
-
         buy_market_trend = getMarketTrendFor(marketTrend.marketName, marketTrend.marketId, 6)
 
-        if buy_market_trend.m == 0.0:
-            print "Market {} has default 0 m, no order will be open".format(marketTrend.marketName)
+        if buy_market_trend.m == 0.0 or buy_market_trend.num_samples < 50:
+            print "Market {} has m: {} and number samples: {}".format(buy_market_trend.marketName, buy_market_trend.m,
+                                                                      buy_market_trend.num_samples)
             continue
 
         buyPrice = getBuyPrice(buy_market_trend)
@@ -140,11 +145,10 @@ def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
     return y_ * scalingFactorY + minY
 
 
-def getMarketTrendFor(marketName, marketId, lastXHours, reliable=True):
+def getMarketTrendFor(marketName, marketId, lastXHours):
     return cryptsy_mongo.calculateMarketTrend(market_name=marketName,
                                               market_id=marketId,
-                                              interval=timedelta(hours=CRYPTSY_HOURS_DIFFERENCE + lastXHours),
-                                              check_num_samples=reliable)
+                                              interval=timedelta(hours=CRYPTSY_HOURS_DIFFERENCE + lastXHours))
 
 
 def initCryptsyClient():
@@ -175,7 +179,7 @@ def splitMarkets(markets):
 
             market_name = next((market_name for market_name in markets if (markets[market_name] == openOrder[0])), None)
 
-            market_trend = getMarketTrendFor(market_name, openOrder[0], 6, False)
+            market_trend = getMarketTrendFor(market_name, openOrder[0], 6)
 
             sellPrice = toEightDigit(getSellPrice(market_trend))
 
@@ -213,7 +217,7 @@ def getSellPrice(market_trend):
 
 
 def placeSellOrder(marketName, marketId, quantity):
-    market_trend = getMarketTrendFor(marketName, marketId, 6, reliable=False)
+    market_trend = getMarketTrendFor(marketName, marketId, 6)
     if market_trend.m == 0.0:
         print "No sell order for market {} will be placed. Not enough sale info.".format(marketName)
         return
@@ -301,8 +305,9 @@ if __name__ == "__main__":
 
     try:
         main(sys.argv[1:])
-    except:
+    except Exception, err:
         print "Unexpected error: {}".format(sys.exc_info()[0])
+        print err
 
     elapsed = datetime.utcnow() - starttime
 
