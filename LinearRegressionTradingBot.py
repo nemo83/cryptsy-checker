@@ -172,9 +172,9 @@ def splitMarkets(markets):
     ordersToBeCancelled = []
     for openOrder in allActiveOrders:
         openMarketNormalized = fromCryptsyServerTime(datetime.strptime(openOrder[2], '%Y-%m-%d %H:%M:%S'))
-        if openOrder[3] == 'Buy' and (openMarketNormalized + timedelta(hours=1)) < datetime.utcnow():
+        if openOrder[3] == 'Buy' and (openMarketNormalized + timedelta(minutes=15)) < datetime.utcnow():
             ordersToBeCancelled.append(openOrder[1])
-        elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(hours=1)) < datetime.utcnow():
+        elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(minutes=30)) < datetime.utcnow():
 
             market_name = next((market_name for market_name in markets if (markets[market_name] == openOrder[0])), None)
 
