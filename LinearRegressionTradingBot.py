@@ -43,14 +43,17 @@ def calculateQuantity(amountToInvest, fee, buyPrice):
 
 
 def getMarketTrends(filteredBtcMarkets, markets):
+
     recent_market_trends = cryptsy_mongo.getRecentMarketTrends()
 
     recent_market_trend_names = [recent_market_trend.marketName for recent_market_trend in recent_market_trends]
 
+    inactive_recent_market_trend_names = filter(lambda x: x in filteredBtcMarkets, recent_market_trend_names)
+
     market_trends = []
 
     for marketName in filteredBtcMarkets:
-        if marketName not in recent_market_trend_names:
+        if marketName not in inactive_recent_market_trend_names:
             market_trend = cryptsy_mongo.calculateMarketTrend(marketName, markets[marketName])
             cryptsy_mongo.persistMarketTrend(market_trend)
 

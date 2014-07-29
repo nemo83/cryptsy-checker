@@ -37,9 +37,13 @@ class CryptsyMongo:
                                              scalingFactorY=float(mongo_market_trend['scalingFactorY']),
                                              avg=float(mongo_market_trend['avg']),
                                              std=float(mongo_market_trend['std']),
-                                             num_samples=mongo_market_trend['num_samples']))
+                                             num_samples=mongo_market_trend['num_samples'],
+                                             sample_time=mongo_market_trend['sample_time']))
 
-        return market_trends
+        filtered_market_trends = filter(lambda x: x.sample_time == max(
+            [z.sample_time for z in filter(lambda y: y.marketName == x.marketName, market_trends)]), market_trends)
+
+        return filtered_market_trends
 
     def persistMarketTrend(self, market_trend):
         market_trend_dict = market_trend.__dict__
@@ -93,7 +97,7 @@ class CryptsyMongo:
 
 class MarketTrend:
     def __init__(self, marketName, marketId, m=0.0, n=0.0, minX=0.0, scalingFactorX=0.0, minY=0.0, scalingFactorY=0.0,
-                 avg=0.0, std=0.0, num_samples=0):
+                 avg=0.0, std=0.0, num_samples=0, sample_time=datetime.utcnow()):
         self.marketName = marketName
         self.marketId = marketId
         self.m = m
@@ -107,9 +111,10 @@ class MarketTrend:
         self.buy = avg - std
         self.sell = avg + std
         self.num_samples = num_samples
+        self.sample_time = sample_time
 
     def __str__(self):
-        return "marketName: {}, id: {}, m: {}, n: {}, minX: {}, scalingFactorX: {}, minY: {}, scalingFactorY: {}, avg: {}, std: {}, buy: {}, sell: {}, num samples: {}".format(
+        return "marketName: {}, id: {}, m: {}, n: {}, minX: {}, scalingFactorX: {}, minY: {}, scalingFactorY: {}, avg: {}, std: {}, buy: {}, sell: {}, num samples: {}, sample_time: {}".format(
             self.marketName,
             self.marketId,
             self.m,
@@ -121,7 +126,8 @@ class MarketTrend:
             self.std,
             self.buy,
             self.sell,
-            self.num_samples
+            self.num_samples,
+            self.sample_time
         )
 
     def __eq__(self, other):
