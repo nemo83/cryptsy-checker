@@ -21,8 +21,10 @@ class CryptsyMongo:
     def getRecentMarketTrends(self, timedelta=timedelta(hours=1)):
         time_start = datetime.utcnow() - timedelta
 
+        # mongo_market_trends = self.market_trend_collection.find(
+        #     {"time": {"$gt": time_start.strftime("%Y-%m-%d %H:%M:%S")}})
         mongo_market_trends = self.market_trend_collection.find(
-            {"time": {"$gt": time_start.strftime("%Y-%m-%d %H:%M:%S")}})
+            {"time": {"$gt": time_start}})
 
         market_trends = []
 
