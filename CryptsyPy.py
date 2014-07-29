@@ -8,6 +8,7 @@ import simplejson
 
 import requests
 
+
 CRYPTSY_HOURS_DIFFERENCE = 4
 
 
@@ -111,6 +112,32 @@ class CryptsyPy:
 
         return tradeStats
 
+    def getAllTrades(self):
+
+        postData = "method={}&nonce={}".format("allmytrades", int(time.time()))
+        trades, apiCallSucceded = self.makeAPIcall(postData)
+
+        tradeStats = {}
+        if apiCallSucceded:
+            for trade in trades:
+                marketid = trade['marketid']
+                tradetype = trade['tradetype']
+                total = trade['total']
+                fee = trade['fee']
+
+                if marketid not in tradeStats:
+                    tradeStats[marketid] = {}
+                    tradeStats[marketid]['NumTrades'] = 0.0
+                    tradeStats[marketid]['Buy'] = 0.0
+                    tradeStats[marketid]['Sell'] = 0.0
+                    tradeStats[marketid]['Fee'] = 0.0
+
+                tradeStats[marketid]['NumTrades'] += 1
+                tradeStats[marketid][tradetype] += float(total)
+                tradeStats[marketid]['Fee'] += float(fee)
+
+        return tradeStats
+
     def getBestPerformingMarketsInTheLast(self, numDays):
         tradeStats = self.getAllTradesInTheLast(numDays)
         filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Buy'] > 0, tradeStats)
@@ -123,7 +150,19 @@ class CryptsyPy:
         tradeStats = self.getAllTradesInTheLast(numDays)
         filteredTradeStats = filter(
             lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Fee'] + tradeStats[x]['Buy'] > 0 and tradeStats[x][
-                'Buy'] > 0, tradeStats)
+                                                                                                      'Buy'] > 0,
+            tradeStats)
+        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
+                                  reverse=True)
+
+        return sortedTradeStats
+
+    def getBestPerformingMarketsFeeIncluded(self):
+        tradeStats = self.getAllTrades()
+        filteredTradeStats = filter(
+            lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Fee'] + tradeStats[x]['Buy'] > 0 and tradeStats[x][
+                                                                                                      'Buy'] > 0,
+            tradeStats)
         sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
                                   reverse=True)
 
@@ -140,7 +179,18 @@ class CryptsyPy:
         tradeStats = self.getAllTradesInTheLast(numDays)
         filteredTradeStats = filter(
             lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Fee'] + tradeStats[x]['Buy'] and tradeStats[x][
-                'Buy'] > 0, tradeStats)
+                                                                                                      'Buy'] > 0,
+            tradeStats)
+        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'])
+
+        return sortedTradeStats
+
+    def getWorstPerformingMarketsFeeIncluded(self):
+        tradeStats = self.getAllTrades()
+        filteredTradeStats = filter(
+            lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Fee'] + tradeStats[x]['Buy'] and tradeStats[x][
+                                                                                                      'Buy'] > 0,
+            tradeStats)
         sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'])
 
         return sortedTradeStats

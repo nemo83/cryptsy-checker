@@ -9,6 +9,7 @@ from pymongo import MongoClient
 from CryptsyPy import CryptsyPy, toEightDigit, fromCryptsyServerTime, toCryptsyServerTime, CRYPTSY_HOURS_DIFFERENCE
 from CryptsyMongo import CryptsyMongo
 
+
 FEE = 0.0025
 BASE_STAKE = 0.00025
 MINIMUM_AMOUNT_TO_INVEST = 0.00025
@@ -43,7 +44,6 @@ def calculateQuantity(amountToInvest, fee, buyPrice):
 
 
 def getMarketTrends(filteredBtcMarkets, markets):
-
     recent_market_trends = cryptsy_mongo.getRecentMarketTrends()
 
     recent_market_trend_names = [recent_market_trend.marketName for recent_market_trend in recent_market_trends]
@@ -79,9 +79,9 @@ def investBTC(btcBalance, activeMarkets, markets):
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.0000002 and x.std > 4 * (x.avg * FEE),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
-    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsInTheLastFeeIncluded(3)
+    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsFeeIncluded()
 
-    worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsInTheLastFeeIncluded(3)
+    worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsFeeIncluded()
 
     suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
                                                                                 bestPerformingMarkets)
@@ -169,9 +169,8 @@ def initMongoClient():
     # cryptsy_mongo = CryptsyMongo()
 
 
-def splitMarkets(markets):
+def getOrdersToBeCancelled(markets):
     allActiveOrders = cryptsyClient.getAllActiveOrders()
-    activeMarkets = []
     ordersToBeCancelled = []
     for openOrder in allActiveOrders:
         openMarketNormalized = fromCryptsyServerTime(datetime.strptime(openOrder[2], '%Y-%m-%d %H:%M:%S'))
@@ -189,13 +188,10 @@ def splitMarkets(markets):
                 print "Cancelling order for {} market. Old Price: {}, New Price: {}".format(market_name, openOrder[4],
                                                                                             sellPrice)
                 ordersToBeCancelled.append(openOrder[1])
-                activeMarkets.append(openOrder[0])
             else:
                 print "Sell order expired but not deleted for {} market. Old Price: {}, New Price: {}".format(
                     market_name, openOrder[4], sellPrice)
-        else:
-            activeMarkets.append(openOrder[0])
-    return activeMarkets, ordersToBeCancelled
+    return ordersToBeCancelled
 
 
 def getNormalizedEstimatedPrice(market_trend):
@@ -248,7 +244,7 @@ def main(argv):
 
     markets = cryptsyClient.getMarkets()
 
-    activeMarkets, ordersToBeCancelled = splitMarkets(markets)
+    ordersToBeCancelled = getOrdersToBeCancelled(markets)
 
     cancelOrders(ordersToBeCancelled)
 
@@ -265,6 +261,10 @@ def main(argv):
             marketName = "{}/BTC".format(balance[0])
             marketId = markets[marketName]
             placeSellOrder(marketName, marketId, balance[1])
+
+    sleep(5)
+
+    activeMarkets = set([active_order[0] for active_order in cryptsyClient.getAllActiveOrders()])
 
     if sell_only:
         print "Sell only flag active. No buy trade will be open. Returning..."
