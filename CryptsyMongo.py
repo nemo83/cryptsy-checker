@@ -1,7 +1,8 @@
 from datetime import timedelta, datetime
-import numpy
 
+import numpy
 from pymongo import MongoClient
+
 
 epoch = datetime.utcfromtimestamp(0)
 
@@ -40,8 +41,9 @@ class CryptsyMongo:
                                              num_samples=mongo_market_trend['num_samples'],
                                              sample_time=mongo_market_trend['sample_time']))
 
-        filtered_market_trends = filter(lambda x: x.sample_time == max(
-            [z.sample_time for z in filter(lambda y: y.marketName == x.marketName, market_trends)]), market_trends)
+        filtered_market_trends = filter(lambda x: datetime.strptime(x.sample_time, "%Y-%m-%d %H:%M:%S") == max(
+            [datetime.strptime(z.sample_time, "%Y-%m-%d %H:%M:%S") for z in
+             filter(lambda y: y.marketName == x.marketName, market_trends)]), market_trends)
 
         return filtered_market_trends
 
