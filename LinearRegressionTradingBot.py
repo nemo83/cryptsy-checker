@@ -53,7 +53,7 @@ def getMarketTrends(filteredBtcMarkets, markets):
     market_trends = []
 
     for marketName in filteredBtcMarkets:
-        if marketName not in inactive_recent_market_trend_names:
+        if marketName not in inactive_recent_market_trend_names and marketName in filteredBtcMarkets:
             market_trend = cryptsy_mongo.calculateMarketTrend(marketName, markets[marketName])
             cryptsy_mongo.persistMarketTrend(market_trend)
 
@@ -160,13 +160,13 @@ def initCryptsyClient():
 
 def initMongoClient():
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection, cryptsy_mongo
-    mongoClient = MongoClient(host="192.168.1.29")
-    # mongoClient = MongoClient()
+    # mongoClient = MongoClient(host="192.168.1.29")
+    mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
-    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
-    # cryptsy_mongo = CryptsyMongo()
+    # cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    cryptsy_mongo = CryptsyMongo()
 
 
 def getOrdersToBeCancelled(markets):
@@ -268,7 +268,7 @@ def main(argv):
 
     if sell_only:
         print "Sell only flag active. No buy trade will be open. Returning..."
-    elif btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
+    elif True: #btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
         investBTC(btcBalance, activeMarkets, markets)
     else:
         print "Not enough funds. Exiting"
