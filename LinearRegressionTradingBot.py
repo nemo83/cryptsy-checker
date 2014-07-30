@@ -50,17 +50,15 @@ def getMarketTrends(filteredBtcMarkets, markets):
 
     inactive_recent_market_trend_names = filter(lambda x: x in filteredBtcMarkets, recent_market_trend_names)
 
-    market_trends = []
+    market_trends = filter(lambda x: x.marketName in filteredBtcMarkets, recent_market_trends)
 
     for marketName in filteredBtcMarkets:
-        if marketName not in inactive_recent_market_trend_names and marketName in filteredBtcMarkets:
+        if marketName not in inactive_recent_market_trend_names:
             market_trend = cryptsy_mongo.calculateMarketTrend(marketName, markets[marketName])
             cryptsy_mongo.persistMarketTrend(market_trend)
 
             if market_trend.num_samples >= 100:
                 market_trends.append(market_trend)
-
-    market_trends += recent_market_trends
 
     marketIds = [market_trend.marketId for market_trend in market_trends]
 
