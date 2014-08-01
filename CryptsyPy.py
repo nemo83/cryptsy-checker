@@ -81,37 +81,6 @@ class CryptsyPy:
 
         return buyMarkets
 
-    def getAllTradesInTheLast(self, numDays):
-        enddate = datetime.now()
-        startdate = enddate - timedelta(days=numDays)
-
-        postData = "method={}&startdate={}&endate={}&nonce={}".format("allmytrades",
-                                                                      startdate.strftime("%Y-%m-%d"),
-                                                                      enddate.strftime("%Y-%m-%d"),
-                                                                      int(time.time()))
-        trades, apiCallSucceded = self.makeAPIcall(postData)
-
-        tradeStats = {}
-        if apiCallSucceded:
-            for trade in trades:
-                marketid = trade['marketid']
-                tradetype = trade['tradetype']
-                total = trade['total']
-                fee = trade['fee']
-
-                if marketid not in tradeStats:
-                    tradeStats[marketid] = {}
-                    tradeStats[marketid]['NumTrades'] = 0.0
-                    tradeStats[marketid]['Buy'] = 0.0
-                    tradeStats[marketid]['Sell'] = 0.0
-                    tradeStats[marketid]['Fee'] = 0.0
-
-                tradeStats[marketid]['NumTrades'] += 1
-                tradeStats[marketid][tradetype] += float(total)
-                tradeStats[marketid]['Fee'] += float(fee)
-
-        return tradeStats
-
     def getAllTrades(self):
 
         postData = "method={}&nonce={}".format("allmytrades", int(time.time()))
@@ -138,24 +107,14 @@ class CryptsyPy:
 
         return tradeStats
 
-    def getBestPerformingMarketsInTheLast(self, numDays):
-        tradeStats = self.getAllTradesInTheLast(numDays)
-        filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Buy'] > 0, tradeStats)
-        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
-                                  reverse=True)
+    def getRecentTrades(self):
+        postData = "method={}&nonce={}".format("allmytrades", int(time.time()))
+        trades, apiCallSucceded = self.makeAPIcall(postData)
 
-        return sortedTradeStats
-
-    def getBestPerformingMarketsInTheLastFeeIncluded(self, numDays):
-        tradeStats = self.getAllTradesInTheLast(numDays)
-        filteredTradeStats = filter(
-            lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Fee'] + tradeStats[x]['Buy'] > 0 and tradeStats[x][
-                                                                                                      'Buy'] > 0,
-            tradeStats)
-        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
-                                  reverse=True)
-
-        return sortedTradeStats
+        if apiCallSucceded:
+            return trades
+        else:
+            None
 
     def getBestPerformingMarketsFeeIncluded(self):
         tradeStats = self.getAllTrades()
@@ -165,23 +124,6 @@ class CryptsyPy:
             tradeStats)
         sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
                                   reverse=True)
-
-        return sortedTradeStats
-
-    def getWorstPerformingMarketsInTheLast(self, numDays):
-        tradeStats = self.getAllTradesInTheLast(numDays)
-        filteredTradeStats = filter(lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Buy'], tradeStats)
-        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'])
-
-        return sortedTradeStats
-
-    def getWorstPerformingMarketsInTheLastFeeIncluded(self, numDays):
-        tradeStats = self.getAllTradesInTheLast(numDays)
-        filteredTradeStats = filter(
-            lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Fee'] + tradeStats[x]['Buy'] and tradeStats[x][
-                                                                                                      'Buy'] > 0,
-            tradeStats)
-        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'])
 
         return sortedTradeStats
 

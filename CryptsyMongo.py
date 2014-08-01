@@ -15,6 +15,7 @@ class CryptsyMongo:
         self.mongo_cryptsy_db = self.mongo_client.cryptsy_database
         self.markets_collection = self.mongo_cryptsy_db.markets_collection
         self.market_trend_collection = self.mongo_cryptsy_db.market_trend_collection
+        self.trades_collection = self.mongo_cryptsy_db.trades_collection
 
     def truncate_market_trend_collection(self):
         self.market_trend_collection.remove()
@@ -96,6 +97,62 @@ class CryptsyMongo:
 
         return marketTrend
 
+    def persistTrades(self, trades):
+        latest_trade = next(self.trades_collection.find().sort('tradeid', -1).limit(1), None)
+        last_trade_id = 0 if latest_trade is None else latest_trade['tradeid']
+        print "last trade id: {}".format(last_trade_id)
+        for trade in trades:
+            if trade['tradeid'] > last_trade_id:
+                self.trades_collection.insert(trade)
+
+    def getLastTrades(self, time_start=(datetime.utcnow() - timedelta(hours=24))):
+        return self.trades_collection.find({"datetime": {"$gt": time_start.strftime("%Y-%m-%d %H:%M:%S")}}).sort(
+            'tradeid', -1)
+
+    def getAllTradesInTheLast(self, time_start):
+
+        trades = self.getLastTrades(time_start)
+
+        tradeStats = {}
+        for trade in trades:
+            marketid = trade['marketid']
+            tradetype = trade['tradetype']
+            total = trade['total']
+            fee = trade['fee']
+
+            if marketid not in tradeStats:
+                tradeStats[marketid] = {}
+                tradeStats[marketid]['NumTrades'] = 0.0
+                tradeStats[marketid]['Buy'] = 0.0
+                tradeStats[marketid]['Sell'] = 0.0
+                tradeStats[marketid]['Fee'] = 0.0
+
+            tradeStats[marketid]['NumTrades'] += 1
+            tradeStats[marketid][tradetype] += float(total)
+            tradeStats[marketid]['Fee'] += float(fee)
+
+        return tradeStats
+
+    def getBestPerformingMarketsInTheLastFeeIncluded(self, numDays):
+        tradeStats = self.getAllTradesInTheLast(numDays)
+        filteredTradeStats = filter(
+            lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Fee'] + tradeStats[x]['Buy'] > 0 and tradeStats[x][
+                'Buy'] > 0,
+            tradeStats)
+        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
+                                  reverse=True)
+
+        return sortedTradeStats
+
+    def getWorstPerformingMarketsInTheLastFeeIncluded(self, numDays):
+        tradeStats = self.getAllTradesInTheLast(numDays)
+        filteredTradeStats = filter(
+            lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Fee'] + tradeStats[x]['Buy'] and tradeStats[x][
+                'Buy'] > 0,
+            tradeStats)
+        sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'])
+
+        return sortedTradeStats
 
 class MarketTrend:
     def __init__(self, marketName, marketId, m=0.0, n=0.0, minX=0.0, scalingFactorX=0.0, minY=0.0, scalingFactorY=0.0,

@@ -77,9 +77,11 @@ def investBTC(btcBalance, activeMarkets, markets):
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.0000002 and x.std > 4 * (x.avg * FEE),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
-    bestPerformingMarkets = cryptsyClient.getBestPerformingMarketsFeeIncluded()
+    bestPerformingMarkets = cryptsy_mongo.getBestPerformingMarketsInTheLastFeeIncluded(
+        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=24)))
 
-    worstPerformingMarkets = cryptsyClient.getWorstPerformingMarketsFeeIncluded()
+    worstPerformingMarkets = cryptsy_mongo.getWorstPerformingMarketsInTheLastFeeIncluded(
+        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=24)))
 
     suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
                                                                                 bestPerformingMarkets)
@@ -233,12 +235,20 @@ def cancelOrders(ordersToBeCancelled):
         sleep(5)
 
 
+def updateTradeHistory():
+    recent_trades = cryptsyClient.getRecentTrades()
+    if recent_trades is not None:
+        cryptsy_mongo.persistTrades(recent_trades)
+
+
 def main(argv):
     getEnv(argv)
 
     initCryptsyClient()
 
     initMongoClient()
+
+    updateTradeHistory()
 
     markets = cryptsyClient.getMarkets()
 
@@ -266,7 +276,7 @@ def main(argv):
 
     if sell_only:
         print "Sell only flag active. No buy trade will be open. Returning..."
-    elif True: #btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
+    elif btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
         investBTC(btcBalance, activeMarkets, markets)
     else:
         print "Not enough funds. Exiting"
