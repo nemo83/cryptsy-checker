@@ -22,7 +22,7 @@ def main(argv):
     cryptsy_client = CryptsyPy(public, private)
     cryptsy_mongo = CryptsyMongo()
 
-    start_time = datetime.utcnow() - timedelta(days=days)
+    start_time = datetime.utcnow() - timedelta(days=int(days))
 
     print "Best markets:"
     tradeStats = cryptsy_mongo.getAllTradesInTheLast(start_time)
