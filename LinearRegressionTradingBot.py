@@ -218,7 +218,7 @@ def getBuyPrice(market_trend):
 
 def getSellPrice(market_trend):
     normalizedEstimatedPrice = getNormalizedEstimatedPrice(market_trend)
-    return normalizedEstimatedPrice + 1.5 * market_trend.std
+    return normalizedEstimatedPrice + market_trend.std
 
 
 def placeSellOrder(marketName, marketId, quantity):
