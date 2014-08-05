@@ -1,13 +1,15 @@
 import getopt
 import sys
-
+from datetime import datetime, timedelta
 from CryptsyPy import CryptsyPy
+from CryptsyMongo import CryptsyMongo
 
 
 public = ''
 private = ''
+days = 1
 
-cryptsyclient = None
+cryptsy_client = None
 
 
 def main(argv):
@@ -16,41 +18,20 @@ def main(argv):
 
     getEnv(argv)
 
-    global cryptsyclient
-    cryptsyclient = CryptsyPy(public, private)
+    global cryptsy_client
+    cryptsy_client = CryptsyPy(public, private)
+    cryptsy_mongo = CryptsyMongo()
 
-    tradeStats = cryptsyclient.getAllTrades()
+    start_time = datetime.utcnow() - timedelta(days=days)
 
     print "Best markets:"
-    filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Buy'] > 0, tradeStats)
-    sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
-                              reverse=True)
-    for tradeStat in sortedTradeStats:
-        print "MarketId: {}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat,
-                                                                 tradeStats[tradeStat]['Sell'],
-                                                                 tradeStats[tradeStat]['Buy'],
-                                                                 tradeStats[tradeStat]['Sell'] - tradeStats[tradeStat][
-                                                                     'Buy'])
-
-    print "Best markets (Fee Inc):"
+    tradeStats = cryptsy_mongo.getAllTradesInTheLast(start_time)
     filteredTradeStats = filter(
-        lambda x: tradeStats[x]['Sell'] > (tradeStats[x]['Buy'] + tradeStats[x]['Fee']) > 0 and tradeStats[x][
-            'Buy'] > 0,
-        tradeStats)
+        lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Fee'] + tradeStats[x]['Buy'] > 0 and tradeStats[x][
+            'Buy'] > 0, tradeStats)
     sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
                               reverse=True)
-    for tradeStat in sortedTradeStats:
-        print "MarketId: {}, Sell: {}, Buy: {}, Fee: {}, Earn: {}".format(tradeStat,
-                                                                          tradeStats[tradeStat]['Sell'],
-                                                                          tradeStats[tradeStat]['Buy'],
-                                                                          tradeStats[tradeStat]['Fee'],
-                                                                          tradeStats[tradeStat]['Sell'] -
-                                                                          tradeStats[tradeStat][
-                                                                              'Buy'] - tradeStats[tradeStat]['Fee'])
 
-    print "\nWorst markets:"
-    filteredTradeStats = filter(lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Buy'], tradeStats)
-    sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'])
     for tradeStat in sortedTradeStats:
         print "MarketId: {}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat,
                                                                  tradeStats[tradeStat]['Sell'],
@@ -58,25 +39,29 @@ def main(argv):
                                                                  tradeStats[tradeStat]['Sell'] - tradeStats[tradeStat][
                                                                      'Buy'])
 
-    print "\nWorst markets (Fee Inc):"
-    filteredTradeStats = filter(lambda x: 0 < tradeStats[x]['Sell'] < (tradeStats[x]['Buy'] + tradeStats[x]['Fee']),
-                                tradeStats)
+    print "Worst markets:"
+    tradeStats = cryptsy_mongo.getAllTradesInTheLast(start_time)
+    filteredTradeStats = filter(
+        lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Fee'] + tradeStats[x]['Buy'] and tradeStats[x][
+            'Buy'] > 0, tradeStats)
     sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'])
+
     for tradeStat in sortedTradeStats:
         print "MarketId: {}, Sell: {}, Buy: {}, Fee: {}, Earn: {}".format(tradeStat,
                                                                           tradeStats[tradeStat]['Sell'],
                                                                           tradeStats[tradeStat]['Buy'],
                                                                           tradeStats[tradeStat]['Fee'],
                                                                           tradeStats[tradeStat]['Sell'] -
-                                                                          tradeStats[tradeStat][
-                                                                              'Buy'], tradeStats[tradeStat]['Fee'])
+                                                                          tradeStats[tradeStat]['Buy'],
+                                                                          tradeStats[tradeStat]['Fee'])
 
 
 def getEnv(argv):
     global public
     global private
+    global days
     try:
-        opts, args = getopt.getopt(argv, "h", ["help", "public=", "private="])
+        opts, args = getopt.getopt(argv, "d:h", ["help", "public=", "private="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -86,6 +71,9 @@ def getEnv(argv):
             public = arg
         elif opt == "--private":
             private = arg
+        elif opt == "-d":
+            days = arg
+
 
 
 if __name__ == "__main__":
