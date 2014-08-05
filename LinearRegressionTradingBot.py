@@ -11,8 +11,8 @@ from CryptsyMongo import CryptsyMongo
 
 
 FEE = 0.0025
-BASE_STAKE = 0.0005
-MINIMUM_AMOUNT_TO_INVEST = 0.0005
+BASE_STAKE = 0.00025
+MINIMUM_AMOUNT_TO_INVEST = 0.00025
 
 sell_only = False
 
@@ -114,13 +114,11 @@ def investBTC(btcBalance, activeMarkets, markets):
         if marketTrend.marketId in userMarketIds:
             desiredAmountToInvest = BASE_STAKE
         elif marketTrend.marketId in bestPerformingMarkets[:3]:
-            desiredAmountToInvest = BASE_STAKE * 6
+            desiredAmountToInvest = BASE_STAKE * 6 * 4
         elif marketTrend.marketId in bestPerformingMarkets[3:6]:
-            desiredAmountToInvest = BASE_STAKE * 3
-        elif marketTrend.marketId in bestPerformingMarkets[6:10]:
-            desiredAmountToInvest = BASE_STAKE * 2
-        elif marketTrend.marketId in bestPerformingMarkets[10:]:
-            desiredAmountToInvest = BASE_STAKE * 1
+            desiredAmountToInvest = BASE_STAKE * 3 * 2
+        elif marketTrend.marketId in bestPerformingMarkets[6:]:
+            desiredAmountToInvest = BASE_STAKE * 2 * 2
         else:
             desiredAmountToInvest = BASE_STAKE
 
@@ -213,7 +211,7 @@ def getNormalizedEstimatedPrice(market_trend):
 
 def getBuyPrice(market_trend):
     normalizedEstimatedPrice = getNormalizedEstimatedPrice(market_trend)
-    return normalizedEstimatedPrice - 2 * market_trend.std
+    return normalizedEstimatedPrice - market_trend.std
 
 
 def getSellPrice(market_trend):
