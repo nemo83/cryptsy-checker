@@ -77,21 +77,18 @@ def investBTC(btcBalance, activeMarkets, markets):
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.0000002 and x.std > 4 * (x.avg * FEE),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
-    best_markets_last_48h = cryptsy_mongo.getBestPerformingMarketsInTheLastFeeIncluded(
-        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=48)))
+    best_markets_last_24h = cryptsy_mongo.getBestPerformingMarketsInTheLastFeeIncluded(
+        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=24)))
 
     worst_markets_last_6h = cryptsy_mongo.getWorstPerformingMarketsInTheLastFeeIncluded(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=6)))
 
-    worst_markets_last_12h = cryptsy_mongo.getWorstPerformingMarketsInTheLastFeeIncluded(
-        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=12)))
-
     worst_markets_last_48h = cryptsy_mongo.getWorstPerformingMarketsInTheLastFeeIncluded(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=48)))
 
-    worstPerformingMarkets = set(worst_markets_last_6h + worst_markets_last_12h + worst_markets_last_48h)
+    worstPerformingMarkets = set(worst_markets_last_6h + worst_markets_last_48h)
 
-    bestPerformingMarkets = [market for market in best_markets_last_48h if market not in worstPerformingMarkets]
+    bestPerformingMarkets = [market for market in best_markets_last_24h if market not in worstPerformingMarkets]
 
     suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
                                                                                 bestPerformingMarkets)
