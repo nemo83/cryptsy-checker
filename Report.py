@@ -1,7 +1,7 @@
 import getopt
 import sys
 from datetime import datetime, timedelta
-from CryptsyPy import CryptsyPy
+from CryptsyPy import CryptsyPy, toCryptsyServerTime
 from CryptsyMongo import CryptsyMongo
 
 
@@ -22,7 +22,7 @@ def main(argv):
     cryptsy_client = CryptsyPy(public, private)
     cryptsy_mongo = CryptsyMongo()
 
-    start_time = datetime.utcnow() - timedelta(days=int(days))
+    start_time = toCryptsyServerTime(datetime.utcnow() - timedelta(days=int(days)))
 
     print "Best markets:"
     tradeStats = cryptsy_mongo.getAllTradesInTheLast(start_time)
@@ -73,7 +73,6 @@ def getEnv(argv):
             private = arg
         elif opt == "-d":
             days = arg
-
 
 
 if __name__ == "__main__":
