@@ -100,7 +100,6 @@ class CryptsyMongo:
     def persistTrades(self, trades):
         latest_trade = next(self.trades_collection.find().sort('tradeid', -1).limit(1), None)
         last_trade_id = 0 if latest_trade is None else latest_trade['tradeid']
-        print "last trade id: {}".format(last_trade_id)
         for trade in trades:
             if trade['tradeid'] > last_trade_id:
                 self.trades_collection.insert(trade)
