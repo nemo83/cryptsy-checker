@@ -75,7 +75,7 @@ def getMarketTrends(filteredBtcMarkets, markets):
             market_trend = cryptsy_mongo.calculateMarketTrend(marketName, markets[marketName])
             cryptsy_mongo.persistMarketTrend(market_trend)
 
-            if market_trend.num_samples >= 175:
+            if market_trend.num_samples >= 200:
                 market_trends.append(market_trend)
 
     marketIds = [market_trend.marketId for market_trend in market_trends]
@@ -144,7 +144,7 @@ def investBTC(btcBalance, activeMarkets, markets):
 
         buy_market_trend = getMarketTrendFor(marketTrend.marketName, marketTrend.marketId, 6)
 
-        if buy_market_trend.m == 0.0 or buy_market_trend.num_samples < 50:
+        if buy_market_trend.m == 0.0 or buy_market_trend.num_samples < 20:
             logger.info(
                 "Market {} has m: {} and number samples: {}".format(buy_market_trend.marketName, buy_market_trend.m,
                                                                     buy_market_trend.num_samples))
