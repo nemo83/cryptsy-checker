@@ -68,7 +68,7 @@ def getMarketTrends(filteredBtcMarkets, markets):
 
     inactive_recent_market_trend_names = filter(lambda x: x in filteredBtcMarkets, recent_market_trend_names)
 
-    market_trends = filter(lambda x: x.marketName in filteredBtcMarkets, recent_market_trends)
+    market_trends = filter(lambda x: x.marketName in filteredBtcMarkets and x.num_samples >= 175, recent_market_trends)
 
     for marketName in filteredBtcMarkets:
         if marketName not in inactive_recent_market_trend_names:
