@@ -75,7 +75,7 @@ def getMarketTrends(filteredBtcMarkets, markets):
             market_trend = cryptsy_mongo.calculateMarketTrend(marketName, markets[marketName])
             cryptsy_mongo.persistMarketTrend(market_trend)
 
-            if market_trend.num_samples >= 100:
+            if market_trend.num_samples >= 175:
                 market_trends.append(market_trend)
 
     marketIds = [market_trend.marketId for market_trend in market_trends]
