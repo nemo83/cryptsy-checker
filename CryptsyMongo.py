@@ -106,7 +106,7 @@ class CryptsyMongo:
 
     def getLastTrades(self, time_start=(datetime.utcnow() - timedelta(hours=24))):
         return self.trades_collection.find({"datetime": {"$gt": time_start.strftime("%Y-%m-%d %H:%M:%S")}}).sort(
-            'tradeid', -1)
+            'tradeid', 1)
 
     def getAllTradesInTheLast(self, time_start):
 
