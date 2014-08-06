@@ -2,6 +2,7 @@ from datetime import timedelta, datetime
 import getopt
 import sys
 import os
+import logging
 from time import sleep
 
 from pymongo import MongoClient
@@ -10,6 +11,7 @@ from CryptsyPy import CryptsyPy, toEightDigit, fromCryptsyServerTime, toCryptsyS
 from CryptsyMongo import CryptsyMongo
 
 
+logging.basicConfig(level=logging.INFO)
 FEE = 0.0025
 BASE_STAKE = 0.00025
 MINIMUM_AMOUNT_TO_INVEST = 0.00025
@@ -77,13 +79,13 @@ def investBTC(btcBalance, activeMarkets, markets):
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.0000002 and x.std > 4 * (x.avg * FEE),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
-    best_markets_last_24h = cryptsy_mongo.getBestPerformingMarketsInTheLastFeeIncluded(
+    best_markets_last_24h = cryptsy_mongo.getBestPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=24)))
 
-    worst_markets_last_6h = cryptsy_mongo.getWorstPerformingMarketsInTheLastFeeIncluded(
+    worst_markets_last_6h = cryptsy_mongo.getWorstPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=6)))
 
-    worst_markets_last_48h = cryptsy_mongo.getWorstPerformingMarketsInTheLastFeeIncluded(
+    worst_markets_last_48h = cryptsy_mongo.getWorstPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=48)))
 
     worstPerformingMarkets = set(worst_markets_last_6h + worst_markets_last_48h)
@@ -127,8 +129,9 @@ def investBTC(btcBalance, activeMarkets, markets):
         buy_market_trend = getMarketTrendFor(marketTrend.marketName, marketTrend.marketId, 6)
 
         if buy_market_trend.m == 0.0 or buy_market_trend.num_samples < 50:
-            print "Market {} has m: {} and number samples: {}".format(buy_market_trend.marketName, buy_market_trend.m,
-                                                                      buy_market_trend.num_samples)
+            logging.info(
+                "Market {} has m: {} and number samples: {}".format(buy_market_trend.marketName, buy_market_trend.m,
+                                                                    buy_market_trend.num_samples))
             continue
 
         buyPrice = getBuyPrice(buy_market_trend)
@@ -136,9 +139,9 @@ def investBTC(btcBalance, activeMarkets, markets):
         quantity = calculateQuantity(amountToInvest, FEE, buyPrice)
 
         if buyPrice <= 0.0 or quantity <= 0.0:
-            print "Attempting to buy: {} {}, at price: {} - Order will not be placed.".format(quantity,
-                                                                                              marketTrend.marketName,
-                                                                                              buyPrice)
+            logging.info("Attempting to buy: {} {}, at price: {} - Order will not be placed.".format(quantity,
+                                                                                                     marketTrend.marketName,
+                                                                                                     buyPrice))
             continue
 
         responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, buyPrice)
@@ -165,13 +168,13 @@ def initCryptsyClient():
 
 def initMongoClient():
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection, cryptsy_mongo
-    # mongoClient = MongoClient(host="192.168.1.29")
-    mongoClient = MongoClient()
+    mongoClient = MongoClient(host="192.168.1.29")
+    # mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
-    # cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
-    cryptsy_mongo = CryptsyMongo()
+    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    # cryptsy_mongo = CryptsyMongo()
 
 
 def getOrdersToBeCancelled(markets):
@@ -190,12 +193,13 @@ def getOrdersToBeCancelled(markets):
             sellPrice = toEightDigit(getSellPrice(market_trend))
 
             if float(sellPrice) != float(openOrder[4]):
-                print "Cancelling order for {} market. Old Price: {}, New Price: {}".format(market_name, openOrder[4],
-                                                                                            sellPrice)
+                logging.info(
+                    "Cancelling order for {} market. Old Price: {}, New Price: {}".format(market_name, openOrder[4],
+                                                                                          sellPrice))
                 ordersToBeCancelled.append(openOrder[1])
             else:
-                print "Sell order expired but not deleted for {} market. Old Price: {}, New Price: {}".format(
-                    market_name, openOrder[4], sellPrice)
+                logging.info("Sell order expired but not deleted for {} market. Old Price: {}, New Price: {}".format(
+                    market_name, openOrder[4], sellPrice))
     return ordersToBeCancelled
 
 
@@ -222,7 +226,7 @@ def getSellPrice(market_trend):
 def placeSellOrder(marketName, marketId, quantity):
     market_trend = getMarketTrendFor(marketName, marketId, 6)
     if market_trend.m == 0.0:
-        print "No sell order for market {} will be placed. Not enough sale info.".format(marketName)
+        logging.info("No sell order for market {} will be placed. Not enough sale info.".format(marketName))
         return
 
     sell_price = getSellPrice(market_trend)
@@ -230,7 +234,7 @@ def placeSellOrder(marketName, marketId, quantity):
     if quantity * sell_price >= 0.00000010:
         cryptsyClient.placeSellOrder(market_trend.marketId, quantity, sell_price)
     else:
-        print "Order is less than 0.00000010: {}".format(quantity * sell_price)
+        logging.info("Order is less than 0.00000010: {}".format(quantity * sell_price))
 
 
 def cancelOrders(ordersToBeCancelled):
@@ -262,9 +266,9 @@ def main(argv):
     cancelOrders(ordersToBeCancelled)
 
     balanceList = filter(lambda x: x[0] != 'Points', cryptsyClient.getInfo())
-    print "Current Balance:"
+    logging.info("Current Balance:")
     for balance in balanceList:
-        print "{}, {}".format(balance[0], balance[1])
+        logging.info("{}, {}".format(balance[0], balance[1]))
 
     btcBalance = 0.0
     for balance in balanceList:
@@ -280,13 +284,13 @@ def main(argv):
     activeMarkets = set([active_order[0] for active_order in cryptsyClient.getAllActiveOrders()])
 
     if sell_only:
-        print "Sell only flag active. No buy trade will be open. Returning..."
+        logging.info("Sell only flag active. No buy trade will be open. Returning...")
     elif btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
         investBTC(btcBalance, activeMarkets, markets)
     else:
-        print "Not enough funds. Exiting"
+        logging.info("Not enough funds. Exiting")
 
-    print "Complete"
+    logging.info("Complete")
 
 
 def getEnv(argv):
@@ -313,10 +317,10 @@ def getEnv(argv):
 
 if __name__ == "__main__":
     starttime = datetime.utcnow()
-    print "Started at {}".format(starttime)
+    logging.info("Started at {}".format(starttime))
     lock_filename = "bot.lock"
     if os.path.isfile(lock_filename):
-        print "Bot already running. Exiting..."
+        logging.info("Bot already running. Exiting...")
         sys.exit(0)
 
     lock_file = open(lock_filename, "w+")
@@ -324,13 +328,12 @@ if __name__ == "__main__":
 
     try:
         main(sys.argv[1:])
-    except Exception, err:
-        print "Unexpected error: {}".format(sys.exc_info()[0])
-        print err
+    except Exception, ex:
+        logging.exception("Unexpected error: {}".format(sys.exc_info()[0]))
 
     elapsed = datetime.utcnow() - starttime
 
-    print "Finished at {}".format(datetime.utcnow())
-    print "Execution took: {}".format(elapsed.seconds)
+    logging.info("Finished at {}".format(datetime.utcnow()))
+    logging.info("Execution took: {}".format(elapsed.seconds))
 
     os.remove(lock_filename)

@@ -133,7 +133,7 @@ class CryptsyMongo:
 
         return tradeStats
 
-    def getAllTradesInTheLast2(self, time_start):
+    def getAllTradesFrom(self, time_start):
 
         trades = self.getLastTrades(time_start)
 
@@ -162,16 +162,16 @@ class CryptsyMongo:
 
         return tradeStats
 
-    def getBestPerformingMarketsInTheLastFeeIncluded(self, numDays):
-        tradeStats = self.getAllTradesInTheLast2(numDays)
+    def getBestPerformingMarketsFrom(self, start_time):
+        tradeStats = self.getAllTradesFrom(start_time)
         filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] >= tradeStats[x]['Fee'] + tradeStats[x]['Buy'],
                                     tradeStats)
         sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
                                   reverse=True)
         return sortedTradeStats
 
-    def getWorstPerformingMarketsInTheLastFeeIncluded(self, numDays):
-        tradeStats = self.getAllTradesInTheLast2(numDays)
+    def getWorstPerformingMarketsFrom(self, start_time):
+        tradeStats = self.getAllTradesFrom(start_time)
         filteredTradeStats = filter(lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Fee'] + tradeStats[x]['Buy'],
                                     tradeStats)
         sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'])
