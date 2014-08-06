@@ -98,15 +98,25 @@ def investBTC(btcBalance, activeMarkets, markets):
     best_markets_last_24h = cryptsy_mongo.getBestPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=24)))
 
+    logger.info("best_markets_last_24h: {}".format(best_markets_last_24h))
+
     worst_markets_last_6h = cryptsy_mongo.getWorstPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=6)))
+
+    logger.info("worst_markets_last_6h: {}".format(worst_markets_last_6h))
 
     worst_markets_last_48h = cryptsy_mongo.getWorstPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=48)))
 
+    logger.info("worst_markets_last_48h: {}".format(worst_markets_last_48h))
+
     worstPerformingMarkets = set(worst_markets_last_6h + worst_markets_last_48h)
 
+    logger.info("worstPerformingMarkets: {}".format(worstPerformingMarkets))
+
     bestPerformingMarkets = [market for market in best_markets_last_24h if market not in worstPerformingMarkets]
+
+    logger.info("bestPerformingMarkets: {}".format(bestPerformingMarkets))
 
     suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
                                                                                 bestPerformingMarkets)
