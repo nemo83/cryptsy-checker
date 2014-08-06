@@ -20,12 +20,12 @@ def main(argv):
 
     global cryptsy_client
     cryptsy_client = CryptsyPy(public, private)
-    cryptsy_mongo = CryptsyMongo()
+    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
 
     start_time = toCryptsyServerTime(datetime.utcnow() - timedelta(days=int(days)))
 
     print "Best markets:"
-    tradeStats = cryptsy_mongo.getAllTradesInTheLast(start_time)
+    tradeStats = cryptsy_mongo.getAllTradesFrom(start_time)
     filteredTradeStats = filter(
         lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Fee'] + tradeStats[x]['Buy'] > 0 and tradeStats[x][
             'Buy'] > 0, tradeStats)
@@ -40,7 +40,7 @@ def main(argv):
                                                                      'Buy'])
 
     print "Worst markets:"
-    tradeStats = cryptsy_mongo.getAllTradesInTheLast(start_time)
+    tradeStats = cryptsy_mongo.getAllTradesFrom(start_time)
     filteredTradeStats = filter(
         lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Fee'] + tradeStats[x]['Buy'] and tradeStats[x][
             'Buy'] > 0, tradeStats)
