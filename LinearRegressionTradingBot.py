@@ -68,7 +68,7 @@ def getMarketTrends(filteredBtcMarkets, markets):
 
     inactive_recent_market_trend_names = filter(lambda x: x in filteredBtcMarkets, recent_market_trend_names)
 
-    market_trends = filter(lambda x: x.marketName in filteredBtcMarkets and x.num_samples >= 175, recent_market_trends)
+    market_trends = filter(lambda x: x.marketName in filteredBtcMarkets and x.num_samples >= 200, recent_market_trends)
 
     for marketName in filteredBtcMarkets:
         if marketName not in inactive_recent_market_trend_names:
@@ -84,14 +84,13 @@ def getMarketTrends(filteredBtcMarkets, markets):
 
 
 def investBTC(btcBalance, active_markets, markets):
-
     market_names = [market for market in markets]
 
     btcMarketNames = filter(lambda x: 'BTC' in x and 'Points' not in x, market_names)
 
     logger.info("activeMarkets: {}".format(active_markets))
 
-    inactiveBtcMarkets = filter(lambda x: markets[x] not in active_markets, btcMarketNames)
+    inactiveBtcMarkets = filter(lambda x: int(markets[x]) not in active_markets, btcMarketNames)
 
     marketTrends, marketIds = getMarketTrends(inactiveBtcMarkets, markets)
 
@@ -200,13 +199,13 @@ def initCryptsyClient():
 
 def initMongoClient():
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection, cryptsy_mongo
-    mongoClient = MongoClient(host="192.168.1.29")
-    # mongoClient = MongoClient()
+    # mongoClient = MongoClient(host="192.168.1.29")
+    mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
-    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
-    # cryptsy_mongo = CryptsyMongo()
+    # cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    cryptsy_mongo = CryptsyMongo()
 
 
 def getOrdersToBeCancelled(markets):
@@ -317,7 +316,7 @@ def main(argv):
 
     if sell_only:
         logger.info("Sell only flag active. No buy trade will be open. Returning...")
-    elif btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
+    elif True:
         investBTC(btcBalance, active_markets, markets)
     else:
         logger.info("Not enough funds. Exiting")
