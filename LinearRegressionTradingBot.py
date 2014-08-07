@@ -83,14 +83,15 @@ def getMarketTrends(filteredBtcMarkets, markets):
     return market_trends, marketIds
 
 
-def investBTC(btcBalance, activeMarkets, markets):
+def investBTC(btcBalance, active_markets, markets):
+
     market_names = [market for market in markets]
 
     btcMarketNames = filter(lambda x: 'BTC' in x and 'Points' not in x, market_names)
 
-    logger.info("activeMarkets: {}".format(activeMarkets))
+    logger.info("activeMarkets: {}".format(active_markets))
 
-    inactiveBtcMarkets = filter(lambda x: markets[x] not in activeMarkets, btcMarketNames)
+    inactiveBtcMarkets = filter(lambda x: markets[x] not in active_markets, btcMarketNames)
 
     marketTrends, marketIds = getMarketTrends(inactiveBtcMarkets, markets)
 
@@ -116,7 +117,8 @@ def investBTC(btcBalance, activeMarkets, markets):
 
     logger.info("worst_performing_markets: {}".format(worst_performing_markets))
 
-    best_performing_markets = [int(market) for market in best_markets_last_24h if int(market) not in worst_performing_markets]
+    best_performing_markets = [int(market) for market in best_markets_last_24h if
+                               int(market) not in worst_performing_markets]
 
     logger.info("best_performing_markets: {}".format(best_performing_markets))
 
@@ -311,12 +313,12 @@ def main(argv):
 
     sleep(5)
 
-    activeMarkets = set([active_order[0] for active_order in cryptsyClient.getAllActiveOrders()])
+    active_markets = set([int(active_order[0]) for active_order in cryptsyClient.getAllActiveOrders()])
 
     if sell_only:
         logger.info("Sell only flag active. No buy trade will be open. Returning...")
     elif btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
-        investBTC(btcBalance, activeMarkets, markets)
+        investBTC(btcBalance, active_markets, markets)
     else:
         logger.info("Not enough funds. Exiting")
 
