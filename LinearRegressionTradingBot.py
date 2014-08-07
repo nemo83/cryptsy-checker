@@ -78,7 +78,7 @@ def getMarketTrends(filteredBtcMarkets, markets):
             if market_trend.num_samples >= 200:
                 market_trends.append(market_trend)
 
-    marketIds = [market_trend.marketId for market_trend in market_trends]
+    marketIds = [int(market_trend.marketId) for market_trend in market_trends]
 
     return market_trends, marketIds
 
