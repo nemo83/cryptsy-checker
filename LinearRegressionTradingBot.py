@@ -199,13 +199,13 @@ def initCryptsyClient():
 
 def initMongoClient():
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection, cryptsy_mongo
-    # mongoClient = MongoClient(host="192.168.1.29")
-    mongoClient = MongoClient()
+    mongoClient = MongoClient(host="192.168.1.29")
+    # mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
-    # cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
-    cryptsy_mongo = CryptsyMongo()
+    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    # cryptsy_mongo = CryptsyMongo()
 
 
 def getOrdersToBeCancelled(markets):
@@ -316,7 +316,7 @@ def main(argv):
 
     if sell_only:
         logger.info("Sell only flag active. No buy trade will be open. Returning...")
-    elif True:
+    elif btcBalance >= MINIMUM_AMOUNT_TO_INVEST:
         investBTC(btcBalance, active_markets, markets)
     else:
         logger.info("Not enough funds. Exiting")
