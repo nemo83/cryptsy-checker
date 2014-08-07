@@ -110,18 +110,18 @@ def investBTC(btcBalance, activeMarkets, markets):
 
     logger.info("worst_markets_last_48h: {}".format(worst_markets_last_48h))
 
-    worstPerformingMarkets = set(worst_markets_last_6h + worst_markets_last_48h)
+    worst_performing_markets = [int(market_id) for market_id in set(worst_markets_last_6h + worst_markets_last_48h)]
 
-    logger.info("worstPerformingMarkets: {}".format(worstPerformingMarkets))
+    logger.info("worst_performing_markets: {}".format(worst_performing_markets))
 
-    bestPerformingMarkets = [market for market in best_markets_last_24h if market not in worstPerformingMarkets]
+    best_performing_markets = [int(market) for market in best_markets_last_24h if int(market) not in worst_performing_markets]
 
-    logger.info("bestPerformingMarkets: {}".format(bestPerformingMarkets))
+    logger.info("best_performing_markets: {}".format(best_performing_markets))
 
     logger.info("marketIds: {}".format(marketIds))
 
     suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
-                                                                                bestPerformingMarkets)
+                                                                                best_performing_markets)
 
     suggestedMarketsTrends = []
 
@@ -131,7 +131,7 @@ def investBTC(btcBalance, activeMarkets, markets):
                 suggestedMarketsTrends.append(marketTrend)
 
     otherMarketsSorted = filter(
-        lambda x: x.marketId not in suggestedMarkets and x.marketId not in worstPerformingMarkets,
+        lambda x: x.marketId not in suggestedMarkets and x.marketId not in worst_performing_markets,
         sortedMarketTrends)
 
     marketTrendsToInvestOn = suggestedMarketsTrends + otherMarketsSorted
@@ -143,11 +143,11 @@ def investBTC(btcBalance, activeMarkets, markets):
 
         if marketTrend.marketId in userMarketIds:
             desiredAmountToInvest = BASE_STAKE
-        elif marketTrend.marketId in bestPerformingMarkets[:3]:
+        elif marketTrend.marketId in best_performing_markets[:3]:
             desiredAmountToInvest = BASE_STAKE * 6
-        elif marketTrend.marketId in bestPerformingMarkets[3:6]:
+        elif marketTrend.marketId in best_performing_markets[3:6]:
             desiredAmountToInvest = BASE_STAKE * 3
-        elif marketTrend.marketId in bestPerformingMarkets[6:]:
+        elif marketTrend.marketId in best_performing_markets[6:]:
             desiredAmountToInvest = BASE_STAKE * 2
         else:
             desiredAmountToInvest = BASE_STAKE
