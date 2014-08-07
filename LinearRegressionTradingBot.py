@@ -130,11 +130,11 @@ def investBTC(btcBalance, active_markets, markets):
 
     for marketId in suggestedMarkets:
         for marketTrend in marketTrends:
-            if marketTrend.marketId == marketId:
+            if int(marketTrend.marketId) == marketId:
                 suggestedMarketsTrends.append(marketTrend)
 
     otherMarketsSorted = filter(
-        lambda x: x.marketId not in suggestedMarkets and x.marketId not in worst_performing_markets,
+        lambda x: int(x.marketId) not in suggestedMarkets and int(x.marketId) not in worst_performing_markets,
         sortedMarketTrends)
 
     marketTrendsToInvestOn = suggestedMarketsTrends + otherMarketsSorted
