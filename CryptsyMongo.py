@@ -134,32 +134,47 @@ class CryptsyMongo:
 
     def getAllTradesFrom(self, time_start):
 
-        trades = self.getLastTrades(time_start)
+        mongo_trade_stats = self.getLastTrades(time_start)
 
-        tradeStats = {}
-        for trade in trades:
+        trade_stats = {}
+        for trade_stat in mongo_trade_stats:
+            market_id = trade_stat['marketid']
+            trade_type = trade_stat['tradetype']
 
-            tradetype = trade['tradetype']
-            marketid = trade['marketid']
-
-            if tradetype == 'Sell' and marketid not in tradeStats:
+            if trade_type == 'Sell' and market_id not in trade_stats:
                 continue
+            elif market_id not in trade_stats:
+                trade_stats[market_id] = []
 
-            total = trade['total']
-            fee = trade['fee']
+            trade_stats[market_id].append(trade_stat)
 
-            if marketid not in tradeStats:
-                tradeStats[marketid] = {}
-                tradeStats[marketid]['NumTrades'] = 0.0
-                tradeStats[marketid]['Buy'] = 0.0
-                tradeStats[marketid]['Sell'] = 0.0
-                tradeStats[marketid]['Fee'] = 0.0
+        for trade_stat in trade_stats:
+            while len(trade_stats[trade_stat]) > 0 and trade_stats[trade_stat][-1]['tradetype'] == 'Buy':
+                trade_stats[trade_stat].pop()
 
-            tradeStats[marketid]['NumTrades'] += 1
-            tradeStats[marketid][tradetype] += float(total)
-            tradeStats[marketid]['Fee'] += float(fee)
+        indexes_to_be_removed = [trade_stat for trade_stat in trade_stats if len(trade_stats[trade_stat]) == 0]
 
-        return tradeStats
+        for index in indexes_to_be_removed:
+            trade_stats.pop(index, None)
+
+        trade_results = {}
+        for market_id in trade_stats:
+            activities = map(
+                lambda trade_stat: (float(trade_stat['total']) if trade_stat['tradetype'] == 'Buy' else 0.0,
+                                    float(trade_stat['total']) if trade_stat['tradetype'] == 'Sell' else 0.0,
+                                    float(trade_stat['fee']), 1),
+                trade_stats[market_id])
+
+            reduction = reduce(lambda x, y: (x[0] + y[0], x[1] + y[1], x[2] + y[2], x[3] + y[3]), activities,
+                               (0.0, 0.0, 0.0, 0))
+
+            trade_results[market_id] = {}
+            trade_results[market_id]['NumTrades'] = reduction[3]
+            trade_results[market_id]['Buy'] = reduction[0]
+            trade_results[market_id]['Sell'] = reduction[1]
+            trade_results[market_id]['Fee'] = reduction[2]
+
+        return trade_results
 
     def getBestPerformingMarketsFrom(self, start_time):
         tradeStats = self.getAllTradesFrom(start_time)
