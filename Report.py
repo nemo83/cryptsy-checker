@@ -1,6 +1,7 @@
 import getopt
 import sys
 from datetime import datetime, timedelta
+
 from CryptsyPy import CryptsyPy, toCryptsyServerTime
 from CryptsyMongo import CryptsyMongo
 
@@ -26,9 +27,8 @@ def main(argv):
 
     print "Best markets:"
     tradeStats = cryptsy_mongo.getAllTradesFrom(start_time)
-    filteredTradeStats = filter(
-        lambda x: tradeStats[x]['Sell'] > tradeStats[x]['Fee'] + tradeStats[x]['Buy'] > 0 and tradeStats[x][
-            'Buy'] > 0, tradeStats)
+    filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] >= tradeStats[x]['Fee'] + tradeStats[x]['Buy'],
+                                tradeStats)
     sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'],
                               reverse=True)
 
@@ -41,9 +41,8 @@ def main(argv):
 
     print "Worst markets:"
     tradeStats = cryptsy_mongo.getAllTradesFrom(start_time)
-    filteredTradeStats = filter(
-        lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Fee'] + tradeStats[x]['Buy'] and tradeStats[x][
-            'Buy'] > 0, tradeStats)
+    filteredTradeStats = filter(lambda x: 0 < tradeStats[x]['Sell'] < tradeStats[x]['Fee'] + tradeStats[x]['Buy'],
+                                tradeStats)
     sortedTradeStats = sorted(filteredTradeStats, key=lambda x: tradeStats[x]['Sell'] - tradeStats[x]['Buy'])
 
     for tradeStat in sortedTradeStats:
@@ -55,12 +54,12 @@ def main(argv):
                                                                           tradeStats[tradeStat]['Buy'],
                                                                           tradeStats[tradeStat]['Fee'])
 
-    market_trends = cryptsy_mongo.getRecentMarketTrends()
+    # market_trends = cryptsy_mongo.getRecentMarketTrends()
 
-    sorted_trends = sorted(market_trends, key=(lambda x: x.num_samples), reverse=True)
+    # sorted_trends = sorted(market_trends, key=(lambda x: x.num_samples), reverse=True)
 
-    for sorted_trend in sorted_trends:
-        print sorted_trend
+    # for sorted_trend in sorted_trends:
+    #     print sorted_trend
 
 
 def getEnv(argv):
