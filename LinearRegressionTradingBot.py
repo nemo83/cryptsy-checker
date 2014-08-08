@@ -11,6 +11,7 @@ from CryptsyPy import CryptsyPy, toEightDigit, fromCryptsyServerTime, toCryptsyS
 from CryptsyMongo import CryptsyMongo
 
 
+
 # create logger
 logger = logging.getLogger("bot_logger")
 logger.setLevel(logging.DEBUG)
@@ -351,8 +352,7 @@ def getEnv(argv):
 
 
 if __name__ == "__main__":
-    starttime = datetime.utcnow()
-    logger.info("Started at {}".format(starttime))
+    logger.info("Started")
     lock_filename = "bot.lock"
     if os.path.isfile(lock_filename):
         logger.info("Bot already running. Exiting...")
@@ -366,9 +366,5 @@ if __name__ == "__main__":
     except Exception, ex:
         logger.exception("Unexpected error: {}".format(sys.exc_info()[0]))
 
-    elapsed = datetime.utcnow() - starttime
-
-    logger.info("Finished at {}".format(datetime.utcnow()))
-    logger.info("Execution took: {}".format(elapsed.seconds))
-
+    logger.info("Finished")
     os.remove(lock_filename)
