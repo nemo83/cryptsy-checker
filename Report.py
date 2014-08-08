@@ -54,12 +54,24 @@ def main(argv):
                                                                           tradeStats[tradeStat]['Buy'],
                                                                           tradeStats[tradeStat]['Fee'])
 
-    # market_trends = cryptsy_mongo.getRecentMarketTrends()
+    market_trends = cryptsy_mongo.getRecentMarketTrends()
 
-    # sorted_trends = sorted(market_trends, key=(lambda x: x.num_samples), reverse=True)
+    sorted_trends = filter(lambda x: x.num_samples > 200,
+                           sorted(market_trends, key=(lambda x: x.num_samples), reverse=True))
 
-    # for sorted_trend in sorted_trends:
-    #     print sorted_trend
+    print "200+ samples: {}".format(len(sorted_trends))
+
+    low_price_sorted_trends = [(x.marketName, x.marketId) for x in filter(lambda x: x.avg < 0.000001, sorted_trends)]
+
+    print "low_price_sorted_trends: {}".format(low_price_sorted_trends)
+
+    sorted_trends = filter(lambda x: x.avg >= 0.000001, sorted_trends)
+
+    print "200+ samples and price: {}".format(len(sorted_trends))
+    print
+
+    for sorted_trend in sorted_trends:
+        print sorted_trend
 
 
 def getEnv(argv):
