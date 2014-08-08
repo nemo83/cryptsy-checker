@@ -55,6 +55,13 @@ def main(argv):
                                                                           tradeStats[tradeStat]['Buy'],
                                                                           tradeStats[tradeStat]['Fee'])
 
+    market_trends = cryptsy_mongo.getRecentMarketTrends()
+
+    sorted_trends = sorted(market_trends, key=(lambda x: x.num_samples), reverse=True)
+
+    for sorted_trend in sorted_trends:
+        print sorted_trend
+
 
 def getEnv(argv):
     global public

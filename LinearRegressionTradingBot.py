@@ -97,6 +97,10 @@ def investBTC(btcBalance, active_markets, markets):
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 4 * (x.avg * FEE),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
+    sorted_market_trend_ids = [x.marketId for x in sortedMarketTrends]
+
+    logger.info("sorted_market_trend_ids: {}".format(sorted_market_trend_ids))
+
     best_markets_last_24h = cryptsy_mongo.getBestPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=24)))
 

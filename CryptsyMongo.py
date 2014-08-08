@@ -206,6 +206,7 @@ class MarketTrend:
             self.scalingFactorX,
             self.minY,
             self.scalingFactorY,
+            self.avg,
             self.std,
             self.buy,
             self.sell,
