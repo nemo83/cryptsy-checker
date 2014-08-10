@@ -63,16 +63,16 @@ def calculateQuantity(amountToInvest, fee, buyPrice):
     return (amountToInvest - amountToInvest * fee) / buyPrice
 
 
-def getMarketTrends(filteredBtcMarkets, markets):
+def getMarketTrends(inactiveBtcMarkets, markets):
     recent_market_trends = cryptsy_mongo.getRecentMarketTrends()
 
     recent_market_trend_names = [recent_market_trend.marketName for recent_market_trend in recent_market_trends]
 
-    inactive_recent_market_trend_names = filter(lambda x: x in filteredBtcMarkets, recent_market_trend_names)
+    inactive_recent_market_trend_names = filter(lambda x: x in inactiveBtcMarkets, recent_market_trend_names)
 
-    market_trends = filter(lambda x: x.marketName in filteredBtcMarkets and x.num_samples >= 200, recent_market_trends)
+    market_trends = filter(lambda x: x.marketName in inactiveBtcMarkets and x.num_samples >= 200, recent_market_trends)
 
-    for marketName in filteredBtcMarkets:
+    for marketName in inactiveBtcMarkets:
         if marketName not in inactive_recent_market_trend_names:
             market_trend = cryptsy_mongo.calculateMarketTrend(marketName, markets[marketName])
             cryptsy_mongo.persistMarketTrend(market_trend)
@@ -92,13 +92,14 @@ def investBTC(btcBalance, active_markets, markets):
 
     logger.info("activeMarkets: {}".format(active_markets))
 
-    inactiveBtcMarkets = filter(lambda x: int(markets[x]) not in active_markets, btcMarketNames)
+    inactive_btc_markets = filter(lambda x: int(markets[x]) not in active_markets, btcMarketNames)
 
-    logger.info("inactiveBtcMarkets: {}".format(inactiveBtcMarkets))
+    logger.info("inactive_btc_markets: {}".format(
+        [markets[inactive_btc_market] for inactive_btc_market in inactive_btc_markets]))
 
-    marketTrends, marketIds = getMarketTrends(inactiveBtcMarkets, markets)
+    market_trends, marketIds = getMarketTrends(inactive_btc_markets, markets)
 
-    sorted_market_trends = sorted(marketTrends, key=lambda x: abs(0.0 - x.m))
+    sorted_market_trends = sorted(market_trends, key=lambda x: abs(0.0 - x.m))
 
     sorted_market_trend_ids = [x.marketId for x in sorted_market_trends]
 
@@ -142,41 +143,41 @@ def investBTC(btcBalance, active_markets, markets):
 
     logger.info("marketIds: {}".format(marketIds))
 
-    suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
-                                                                                best_performing_markets)
+    suggested_market_ids = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
+                                                                                    best_performing_markets)
 
-    suggestedMarketsTrends = []
+    suggested_market_trends = []
 
-    for marketId in suggestedMarkets:
-        for marketTrend in marketTrends:
-            if int(marketTrend.marketId) == marketId:
-                suggestedMarketsTrends.append(marketTrend)
+    for market_id in suggested_market_ids:
+        for market_trend in market_trends:
+            if int(market_trend.marketId) == market_id:
+                suggested_market_trends.append(market_trend)
 
-    otherMarketsSorted = filter(
-        lambda x: int(x.marketId) not in suggestedMarkets and int(x.marketId) not in worst_performing_markets,
+    other_sorted_market_trends = filter(
+        lambda x: int(x.marketId) not in suggested_market_ids and int(x.marketId) not in worst_performing_markets,
         sorted_market_trends_to_bet_on)
 
-    marketTrendsToInvestOn = suggestedMarketsTrends + otherMarketsSorted
+    marketTrendsToInvestOn = suggested_market_trends + other_sorted_market_trends
 
-    for marketTrend in marketTrendsToInvestOn:
+    for market_trend in marketTrendsToInvestOn:
 
         if btcBalance < MINIMUM_AMOUNT_TO_INVEST:
             break
 
-        if marketTrend.marketId in userMarketIds:
-            desiredAmountToInvest = BASE_STAKE
-        elif marketTrend.marketId in best_performing_markets[:3]:
+        if market_trend.marketId in userMarketIds:
+            desiredAmountToInvest = TEST_STAKE
+        elif market_trend.marketId in best_performing_markets[:3]:
             desiredAmountToInvest = BASE_STAKE * 6
-        elif marketTrend.marketId in best_performing_markets[3:6]:
+        elif market_trend.marketId in best_performing_markets[3:6]:
             desiredAmountToInvest = BASE_STAKE * 3
-        elif marketTrend.marketId in best_performing_markets[6:]:
+        elif market_trend.marketId in best_performing_markets[6:]:
             desiredAmountToInvest = BASE_STAKE * 2
         else:
             desiredAmountToInvest = TEST_STAKE
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
-        buy_market_trend = getMarketTrendFor(marketTrend.marketName, marketTrend.marketId, 6)
+        buy_market_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 6)
 
         if buy_market_trend.m == 0.0 or buy_market_trend.num_samples < 20:
             logger.info(
@@ -190,11 +191,11 @@ def investBTC(btcBalance, active_markets, markets):
 
         if buyPrice <= 0.0 or quantity <= 0.0:
             logger.info("Attempting to buy: {} {}, at price: {} - Order will not be placed.".format(quantity,
-                                                                                                    marketTrend.marketName,
+                                                                                                    market_trend.marketName,
                                                                                                     buyPrice))
             continue
 
-        responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(marketTrend.marketId, quantity, buyPrice)
+        responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(market_trend.marketId, quantity, buyPrice)
         if apiCallSucceded:
             btcBalance -= amountToInvest
 
