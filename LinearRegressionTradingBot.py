@@ -30,7 +30,8 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 FEE = 0.0025
-BASE_STAKE = 0.00025
+BASE_STAKE = 0.0005
+TEST_STAKE = 0.00025
 MINIMUM_AMOUNT_TO_INVEST = 0.00025
 
 sell_only = False
@@ -89,8 +90,6 @@ def investBTC(btcBalance, active_markets, markets):
 
     btcMarketNames = filter(lambda x: 'BTC' in x and 'Points' not in x, market_names)
 
-    logger.info("activeMarkets: {}".format(active_markets))
-
     inactiveBtcMarkets = filter(lambda x: int(markets[x]) not in active_markets, btcMarketNames)
 
     marketTrends, marketIds = getMarketTrends(inactiveBtcMarkets, markets)
@@ -98,35 +97,19 @@ def investBTC(btcBalance, active_markets, markets):
     sortedMarketTrends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001 and x.std > 4 * (x.avg * FEE),
                                 sorted(marketTrends, key=lambda x: abs(0.0 - x.m)))
 
-    sorted_market_trend_ids = [x.marketId for x in sortedMarketTrends]
-
-    logger.info("sorted_market_trend_ids: {}".format(sorted_market_trend_ids))
-
     best_markets_last_24h = cryptsy_mongo.getBestPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=24)))
-
-    logger.info("best_markets_last_24h: {}".format(best_markets_last_24h))
 
     worst_markets_last_6h = cryptsy_mongo.getWorstPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=6)))
 
-    logger.info("worst_markets_last_6h: {}".format(worst_markets_last_6h))
-
     worst_markets_last_24h = cryptsy_mongo.getWorstPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=24)))
 
-    logger.info("worst_markets_last_24h: {}".format(worst_markets_last_24h))
-
     worst_performing_markets = [int(market_id) for market_id in set(worst_markets_last_6h + worst_markets_last_24h)]
-
-    logger.info("worst_performing_markets: {}".format(worst_performing_markets))
 
     best_performing_markets = [int(market) for market in best_markets_last_24h if
                                int(market) not in worst_performing_markets]
-
-    logger.info("best_performing_markets: {}".format(best_performing_markets))
-
-    logger.info("marketIds: {}".format(marketIds))
 
     suggestedMarkets = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
                                                                                 best_performing_markets)
@@ -158,7 +141,7 @@ def investBTC(btcBalance, active_markets, markets):
         elif marketTrend.marketId in best_performing_markets[6:]:
             desiredAmountToInvest = BASE_STAKE * 2
         else:
-            desiredAmountToInvest = BASE_STAKE
+            desiredAmountToInvest = TEST_STAKE
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
