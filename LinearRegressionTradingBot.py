@@ -100,17 +100,21 @@ def investBTC(btcBalance, active_markets, markets):
 
     sorted_market_trends = sorted(marketTrends, key=lambda x: abs(0.0 - x.m))
 
-    logger.info("sorted_market_trends: {}".format(sorted_market_trends))
+    sorted_market_trend_ids = [x.marketId for x in sorted_market_trends]
+
+    logger.info("sorted_market_trend_ids: {}".format(sorted_market_trend_ids))
 
     avg_filtered_market_trends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001, sorted_market_trends)
 
-    logger.info("avg_filtered_market_trends: {}".format(avg_filtered_market_trends))
+    avg_filtered_market_trends_ids = [x.marketId for x in avg_filtered_market_trends]
+
+    logger.info("avg_filtered_market_trends_ids: {}".format(avg_filtered_market_trends_ids))
 
     sorted_market_trends_to_bet_on = filter(lambda x: x.std > 4 * (x.avg * FEE), avg_filtered_market_trends)
 
-    sorted_market_trend_ids = [x.marketId for x in sorted_market_trends_to_bet_on]
+    sorted_market_trends_to_bet_on_ids = [x.marketId for x in sorted_market_trends_to_bet_on]
 
-    logger.info("sorted_market_trend_ids: {}".format(sorted_market_trend_ids))
+    logger.info("sorted_market_trends_to_bet_on_ids: {}".format(sorted_market_trends_to_bet_on_ids))
 
     best_markets_last_24h = cryptsy_mongo.getBestPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=24)))
