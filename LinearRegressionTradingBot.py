@@ -12,6 +12,7 @@ from CryptsyMongo import CryptsyMongo
 
 
 
+
 # create logger
 logger = logging.getLogger("bot_logger")
 logger.setLevel(logging.DEBUG)
@@ -105,7 +106,8 @@ def investBTC(btcBalance, active_markets, markets):
 
     logger.info("sorted_market_trend_ids: {}".format(sorted_market_trend_ids))
 
-    avg_filtered_market_trends = filter(lambda x: x.m != 0.0 and x.avg >= 0.000001, sorted_market_trends)
+    avg_filtered_market_trends = filter(lambda x: x.m != 0.0 and x.m >= -0.3 and x.avg >= 0.000001,
+                                        sorted_market_trends)
 
     avg_filtered_market_trends_ids = [x.marketId for x in avg_filtered_market_trends]
 
@@ -179,7 +181,7 @@ def investBTC(btcBalance, active_markets, markets):
 
         buy_market_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 6)
 
-        if buy_market_trend.m == 0.0 or buy_market_trend.num_samples < 20:
+        if buy_market_trend.m == 0.0 or buy_market_trend.m <= -0.3 or buy_market_trend.num_samples < 20:
             logger.info(
                 "Market {} has m: {} and number samples: {}".format(buy_market_trend.marketName, buy_market_trend.m,
                                                                     buy_market_trend.num_samples))
