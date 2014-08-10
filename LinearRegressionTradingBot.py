@@ -95,7 +95,7 @@ def investBTC(btcBalance, active_markets, markets):
     inactive_btc_markets = filter(lambda x: int(markets[x]) not in active_markets, btcMarketNames)
 
     logger.info("inactive_btc_markets: {}".format(
-        [markets[inactive_btc_market] for inactive_btc_market in inactive_btc_markets]))
+        [int(markets[inactive_btc_market]) for inactive_btc_market in inactive_btc_markets]))
 
     market_trends, marketIds = getMarketTrends(inactive_btc_markets, markets)
 
