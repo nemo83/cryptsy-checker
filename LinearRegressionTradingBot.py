@@ -310,10 +310,10 @@ def main(argv):
 
     initMongoClient()
 
-    updateTradeHistory()
-
     if not sell_only:
-        markets = cryptsyClient.getMarkets()
+        updateTradeHistory()
+
+    markets = cryptsyClient.getMarkets()
 
     ordersToBeCancelled = getOrdersToBeCancelled(markets)
 
