@@ -168,7 +168,8 @@ def investBTC(btcBalance, active_markets, markets):
         if btcBalance < MINIMUM_AMOUNT_TO_INVEST:
             break
 
-        market_multiplier = market_multipliers[market_trend.marketId]
+        market_multiplier = market_multipliers[
+            market_trend.marketId] if market_trend.marketId in market_multipliers else 0
 
         logger.info("Market: {} - multiplier: {}".format(market_trend.marketId, market_multiplier))
 
