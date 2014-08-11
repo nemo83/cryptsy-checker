@@ -13,6 +13,7 @@ from CryptsyMongo import CryptsyMongo
 
 
 
+
 # create logger
 logger = logging.getLogger("bot_logger")
 logger.setLevel(logging.DEBUG)
@@ -373,7 +374,7 @@ def getEnv(argv):
         elif opt == "--private":
             private = arg
         elif opt == "--marketIds":
-            userMarketIds = arg.split(",")
+            userMarketIds = [int(x) for x in arg.split(",")]
         elif opt == "--sellOnly":
             sell_only = True
 
