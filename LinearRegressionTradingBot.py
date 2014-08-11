@@ -312,7 +312,8 @@ def main(argv):
 
     updateTradeHistory()
 
-    markets = cryptsyClient.getMarkets()
+    if not sell_only:
+        markets = cryptsyClient.getMarkets()
 
     ordersToBeCancelled = getOrdersToBeCancelled(markets)
 
