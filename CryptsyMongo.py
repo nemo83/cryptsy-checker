@@ -176,6 +176,65 @@ class CryptsyMongo:
 
         return trade_results
 
+    def getMarketsMultipliers(self, time_start=(datetime.utcnow() - timedelta(hours=24))):
+
+        mongo_trade_stats = self.getLastTrades(time_start)
+
+        trade_stats = {}
+        for trade_stat in mongo_trade_stats:
+            market_id = trade_stat['marketid']
+            if market_id not in trade_stats:
+                trade_stats[market_id] = []
+            trade_stats[market_id].append(trade_stat)
+
+        for trade_stat in trade_stats:
+            while len(trade_stats[trade_stat]) > 0 and trade_stats[trade_stat][0]['tradetype'] == 'Sell':
+                trade_stats[trade_stat].pop(0)
+
+        for trade_stat in trade_stats:
+            while len(trade_stats[trade_stat]) > 0 and trade_stats[trade_stat][-1]['tradetype'] == 'Buy':
+                trade_stats[trade_stat].pop()
+
+        indexes_to_be_removed = [trade_stat for trade_stat in trade_stats if len(trade_stats[trade_stat]) == 0]
+
+        for index in indexes_to_be_removed:
+            trade_stats.pop(index, None)
+
+        multipliers = {}
+        for market_id in trade_stats:
+            activities = map(
+                lambda trade_stat: (trade_stat['tradetype'], float(trade_stat['total']), float(trade_stat['fee']), 0),
+                trade_stats[market_id])
+
+            multiplier_counter = 0
+            income = 0.0
+            flag = False
+
+            for activity in activities:
+                if activity[0] == "Buy" and not flag:
+                    income -= activity[1] + activity[2]
+                elif activity[0] == "Buy" and flag:
+                    if income > 0:
+                        multiplier_counter += 1
+                    else:
+                        multiplier_counter -= 1
+                    income = 0
+                    flag = False
+                else:
+                    income += activity[1] + activity[2]
+                    flag = True
+
+            if flag:
+                if income > 0:
+                    multiplier_counter += 1
+                else:
+                    multiplier_counter -= 1
+
+            multipliers[int(market_id)] = {}
+            multipliers[int(market_id)] = multiplier_counter
+
+        return multipliers
+
     def getBestPerformingMarketsFrom(self, start_time):
         tradeStats = self.getAllTradesFrom(start_time)
         filteredTradeStats = filter(lambda x: tradeStats[x]['Sell'] >= tradeStats[x]['Fee'] + tradeStats[x]['Buy'],

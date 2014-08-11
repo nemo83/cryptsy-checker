@@ -161,19 +161,25 @@ def investBTC(btcBalance, active_markets, markets):
 
     marketTrendsToInvestOn = suggested_market_trends + other_sorted_market_trends
 
+    market_multipliers = cryptsy_mongo.getMarketsMultipliers()
+
     for market_trend in marketTrendsToInvestOn:
 
         if btcBalance < MINIMUM_AMOUNT_TO_INVEST:
             break
 
+        market_multiplier = market_multipliers[market_trend.marketId]
+
+        logger.info("Market: {} - multiplier: {}".format(market_trend.marketId, market_multiplier))
+
         if market_trend.marketId in userMarketIds:
             desiredAmountToInvest = TEST_STAKE
-        elif market_trend.marketId in best_performing_markets[:3]:
-            desiredAmountToInvest = BASE_STAKE * 6
-        elif market_trend.marketId in best_performing_markets[3:6]:
-            desiredAmountToInvest = BASE_STAKE * 3
-        elif market_trend.marketId in best_performing_markets[6:]:
-            desiredAmountToInvest = BASE_STAKE * 2
+        elif market_multiplier > 0:
+            desiredAmountToInvest = BASE_STAKE * market_multiplier
+        elif market_multiplier == 0:
+            desiredAmountToInvest = BASE_STAKE
+        elif market_multiplier < 0:
+            continue
         else:
             desiredAmountToInvest = TEST_STAKE
 
