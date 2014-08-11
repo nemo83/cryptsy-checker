@@ -145,6 +145,8 @@ def investBTC(btcBalance, active_markets, markets):
 
     logger.info("marketIds: {}".format(marketIds))
 
+    logger.info("userMarketIds: {}".format(userMarketIds))
+
     suggested_market_ids = filter(lambda x: x in marketIds, userMarketIds) + filter(lambda x: x in marketIds,
                                                                                     best_performing_markets)
 
