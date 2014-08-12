@@ -2,7 +2,7 @@ import getopt
 import sys
 from datetime import datetime, timedelta
 
-from CryptsyPy import CryptsyPy, toCryptsyServerTime
+from CryptsyPy import CryptsyPy, toCryptsyServerTime, toEightDigit
 from CryptsyMongo import CryptsyMongo
 
 
@@ -23,6 +23,8 @@ def main(argv):
     cryptsy_client = CryptsyPy(public, private)
     # cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
     cryptsy_mongo = CryptsyMongo()
+
+    recent_market_trends = cryptsy_mongo.getRecentMarketTrends()
 
     recent_trades = cryptsy_client.getRecentTrades()
     if recent_trades is not None:
@@ -45,12 +47,16 @@ def main(argv):
         total_buy_best += float(mongotradeStats[tradeStat]['Buy'])
         total_sell_best += float(mongotradeStats[tradeStat]['Sell'])
         total_fee_best += float(mongotradeStats[tradeStat]['Fee'])
-        print "MarketId: {}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat,
-                                                                 mongotradeStats[tradeStat]['Sell'],
-                                                                 mongotradeStats[tradeStat]['Buy'],
-                                                                 mongotradeStats[tradeStat]['Sell'] -
-                                                                 mongotradeStats[tradeStat][
-                                                                     'Buy'])
+        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat,
+                                                                         next((toEightDigit(market_trend.std) for
+                                                                               market_trend in recent_market_trends if
+                                                                               int(market_trend.marketId) == int(
+                                                                                   tradeStat))),
+                                                                         mongotradeStats[tradeStat]['Sell'],
+                                                                         mongotradeStats[tradeStat]['Buy'],
+                                                                         mongotradeStats[tradeStat]['Sell'] -
+                                                                         mongotradeStats[tradeStat][
+                                                                             'Buy'])
 
     print "Best markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_best, total_sell_best,
                                                                                 total_fee_best,
@@ -70,13 +76,18 @@ def main(argv):
         total_buy_worst += float(mongotradeStats[tradeStat]['Buy'])
         total_sell_worst += float(mongotradeStats[tradeStat]['Sell'])
         total_fee_worst += float(mongotradeStats[tradeStat]['Fee'])
-        print "MarketId: {}, Sell: {}, Buy: {}, Fee: {}, Earn: {}".format(tradeStat,
-                                                                          mongotradeStats[tradeStat]['Sell'],
-                                                                          mongotradeStats[tradeStat]['Buy'],
-                                                                          mongotradeStats[tradeStat]['Fee'],
-                                                                          mongotradeStats[tradeStat]['Sell'] -
-                                                                          mongotradeStats[tradeStat]['Buy'],
-                                                                          mongotradeStats[tradeStat]['Fee'])
+        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Fee: {}, Earn: {}".format(tradeStat,
+                                                                                  next((toEightDigit(market_trend.std)
+                                                                                        for market_trend in
+                                                                                        recent_market_trends if int(
+                                                                                      market_trend.marketId) == int(
+                                                                                      tradeStat))),
+                                                                                  mongotradeStats[tradeStat]['Sell'],
+                                                                                  mongotradeStats[tradeStat]['Buy'],
+                                                                                  mongotradeStats[tradeStat]['Fee'],
+                                                                                  mongotradeStats[tradeStat]['Sell'] -
+                                                                                  mongotradeStats[tradeStat]['Buy'],
+                                                                                  mongotradeStats[tradeStat]['Fee'])
 
     print "Worst markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_worst, total_sell_worst,
                                                                                  total_fee_worst,
