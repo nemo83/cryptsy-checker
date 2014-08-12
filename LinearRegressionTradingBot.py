@@ -190,7 +190,7 @@ def investBTC(btcBalance, active_markets, markets):
         elif market_multiplier > 0:
             desiredAmountToInvest = BASE_STAKE * market_multiplier
         elif market_multiplier == 0:
-            desiredAmountToInvest = BASE_STAKE
+            desiredAmountToInvest = TEST_STAKE
         elif market_multiplier < 0:
             continue
         else:
@@ -198,7 +198,7 @@ def investBTC(btcBalance, active_markets, markets):
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
-        buy_market_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 3)
+        buy_market_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 12)
 
         if buy_market_trend.m == 0.0 or buy_market_trend.m <= -0.5 or buy_market_trend.num_samples < 20:
             logger.info(
