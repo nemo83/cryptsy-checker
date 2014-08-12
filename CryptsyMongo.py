@@ -221,7 +221,7 @@ class CryptsyMongo:
                     income = 0
                     flag = False
                 else:
-                    income += activity[1] + activity[2]
+                    income += activity[1] - activity[2]
                     flag = True
 
             if flag:
