@@ -69,7 +69,7 @@ def getMarketTrends(inactiveBtcMarkets, markets):
     recent_market_trends = cryptsy_mongo.getRecentMarketTrends()
 
     for recent_market_trend in recent_market_trends:
-        if recent_market_trend.std <= 0:
+        if recent_market_trend.std < 0:
             logger.warn(
                 "Non positive standard deviation {} for recent market trend, market {} ".format(recent_market_trend.std,
                                                                                                 recent_market_trend.marketName))
@@ -83,7 +83,7 @@ def getMarketTrends(inactiveBtcMarkets, markets):
     for marketName in inactiveBtcMarkets:
         if marketName not in inactive_recent_market_trend_names:
             market_trend = cryptsy_mongo.calculateMarketTrend(marketName, markets[marketName])
-            if market_trend.std <= 0:
+            if market_trend.std < 0:
                 logger.warn("Non positive standard deviation {} for market {}".format(market_trend.std,
                                                                                       market_trend.marketName))
             cryptsy_mongo.persistMarketTrend(market_trend)
@@ -234,7 +234,7 @@ def getMarketTrendFor(marketName, marketId, lastXHours):
                                                       market_id=marketId,
                                                       interval=timedelta(hours=CRYPTSY_HOURS_DIFFERENCE + lastXHours))
 
-    if market_trend.std <= 0:
+    if market_trend.std < 0:
         logger.warn("Non positive standard deviation {} for market {} on a {} hours window".format(market_trend.std,
                                                                                                    market_trend.marketName,
                                                                                                    lastXHours))
