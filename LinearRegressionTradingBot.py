@@ -361,7 +361,7 @@ def main(argv):
 
     sleep(5)
 
-    active_markets = set([int(active_order[0]) for active_order in cryptsyClient.getAllActiveOrders()])
+    active_markets = set([2] + [int(active_order[0]) for active_order in cryptsyClient.getAllActiveOrders()])
 
     if sell_only:
         logger.info("Sell only flag active. No buy trade will be open. Returning...")
