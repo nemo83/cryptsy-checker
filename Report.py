@@ -51,7 +51,7 @@ def main(argv):
                                                                          next((toEightDigit(market_trend.std) for
                                                                                market_trend in recent_market_trends if
                                                                                int(market_trend.marketId) == int(
-                                                                                   tradeStat))),
+                                                                                   tradeStat)), None),
                                                                          mongotradeStats[tradeStat]['Sell'],
                                                                          mongotradeStats[tradeStat]['Buy'],
                                                                          mongotradeStats[tradeStat]['Sell'] -
@@ -81,7 +81,7 @@ def main(argv):
                                                                                         for market_trend in
                                                                                         recent_market_trends if int(
                                                                                       market_trend.marketId) == int(
-                                                                                      tradeStat))),
+                                                                                      tradeStat)), None),
                                                                                   mongotradeStats[tradeStat]['Sell'],
                                                                                   mongotradeStats[tradeStat]['Buy'],
                                                                                   mongotradeStats[tradeStat]['Fee'],
