@@ -175,6 +175,8 @@ def investBTC(btcBalance, active_markets, markets):
 
     market_multipliers = cryptsy_mongo.getMarketsMultipliers()
 
+    logger.info("Markets Multiplier: {}".format(market_multipliers))
+
     for market_trend in marketTrendsToInvestOn:
 
         if btcBalance < MINIMUM_AMOUNT_TO_INVEST:
