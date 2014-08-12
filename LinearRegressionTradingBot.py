@@ -68,6 +68,12 @@ def calculateQuantity(amountToInvest, fee, buyPrice):
 def getMarketTrends(inactiveBtcMarkets, markets):
     recent_market_trends = cryptsy_mongo.getRecentMarketTrends()
 
+    for recent_market_trend in recent_market_trends:
+        if recent_market_trend.std <= 0:
+            logger.warn(
+                "Non positive standard deviation {} for recent market trend, market {} ".format(recent_market_trend.std,
+                                                                                                recent_market_trend.marketName))
+
     recent_market_trend_names = [recent_market_trend.marketName for recent_market_trend in recent_market_trends]
 
     inactive_recent_market_trend_names = filter(lambda x: x in inactiveBtcMarkets, recent_market_trend_names)
@@ -77,6 +83,9 @@ def getMarketTrends(inactiveBtcMarkets, markets):
     for marketName in inactiveBtcMarkets:
         if marketName not in inactive_recent_market_trend_names:
             market_trend = cryptsy_mongo.calculateMarketTrend(marketName, markets[marketName])
+            if market_trend.std <= 0:
+                logger.warn("Non positive standard deviation {} for market {}".format(market_trend.std,
+                                                                                      market_trend.marketName))
             cryptsy_mongo.persistMarketTrend(market_trend)
 
             if market_trend.num_samples >= 200:
@@ -219,9 +228,16 @@ def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
 
 
 def getMarketTrendFor(marketName, marketId, lastXHours):
-    return cryptsy_mongo.calculateMarketTrend(market_name=marketName,
-                                              market_id=marketId,
-                                              interval=timedelta(hours=CRYPTSY_HOURS_DIFFERENCE + lastXHours))
+    market_trend = cryptsy_mongo.calculateMarketTrend(market_name=marketName,
+                                                      market_id=marketId,
+                                                      interval=timedelta(hours=CRYPTSY_HOURS_DIFFERENCE + lastXHours))
+
+    if market_trend.std <= 0:
+        logger.warn("Non positive standard deviation {} for market {} on a {} hours window".format(market_trend.std,
+                                                                                                   market_trend.marketName,
+                                                                                                   lastXHours))
+
+    return market_trend
 
 
 def initCryptsyClient():
