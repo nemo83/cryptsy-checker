@@ -27,7 +27,7 @@ def getNormalizedEstimatedPrice(market_trend, time_x=datetime.utcnow()):
                                    market_trend.m, market_trend.n,
                                    market_trend.minX, market_trend.scalingFactorX,
                                    market_trend.minY, market_trend.scalingFactorY)
-    normalizedEstimatedPrice = float(estimatedPrice) / 1000000000
+    normalizedEstimatedPrice = float(estimatedPrice) / 100000000
     return normalizedEstimatedPrice
 
 
@@ -57,8 +57,8 @@ def plot_diagram(market_name, market_id):
 
     times_x = []
     prices_y = []
-    market_trend = cryptsy_mongo.calculateMarketTrend("LTC/BTC", 3)
-    for hour in range(0, 12):
+    market_trend = cryptsy_mongo.calculateMarketTrend(market_name, market_id)
+    for hour in range(0, 24):
         print "hour: {}".format(hour)
         time_x = datetime.utcnow() - timedelta(hours=hour)
         price_y = getNormalizedEstimatedPrice(market_trend, time_x)
