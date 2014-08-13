@@ -19,6 +19,7 @@ from CryptsyMongo import CryptsyMongo
 
 
 
+
 # create logger
 logger = logging.getLogger("bot_logger")
 logger.setLevel(logging.DEBUG)
@@ -205,7 +206,7 @@ def investBTC(btcBalance, active_markets, markets):
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
-        buy_market_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId)
+        buy_market_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, timedelta(hours=16))
 
         if buy_market_trend.m == 0.0 or buy_market_trend.m <= -0.5 or buy_market_trend.num_samples < 20:
             logger.info(
@@ -307,7 +308,7 @@ def getSellPrice(market_trend):
 
 
 def placeSellOrder(marketName, marketId, quantity):
-    market_trend = getMarketTrendFor(marketName, marketId)
+    market_trend = getMarketTrendFor(marketName, marketId, timedelta(hours=16))
     if market_trend.m == 0.0:
         logger.info("No sell order for market {} will be placed. Not enough sale info.".format(marketName))
         return
