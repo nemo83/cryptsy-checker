@@ -187,7 +187,7 @@ def investBTC(btcBalance, active_markets, markets):
 
         logger.info("Market: {} - multiplier: {}".format(market_trend.marketId, market_multiplier))
 
-        if market_trend.marketId in userMarketIds:
+        if int(market_trend.marketId) in userMarketIds:
             desiredAmountToInvest = TEST_STAKE
         elif market_multiplier > 0:
             desiredAmountToInvest = BASE_STAKE * market_multiplier
