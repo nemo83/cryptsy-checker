@@ -62,7 +62,7 @@ def plot_diagram(market_name, market_id):
         print "hour: {}".format(hour)
         time_x = datetime.utcnow() - timedelta(hours=hour)
         price_y = getNormalizedEstimatedPrice(market_trend, time_x)
-        times_x.append(time_x)
+        times_x.append(timeX = (toCryptsyServerTime(time_x) - epoch).total_seconds())
         prices_y.append(price_y)
     print times_x
     print prices_y
