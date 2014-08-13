@@ -11,6 +11,7 @@ cryptsyClient = None
 
 public = ''
 private = ''
+userMarketIds = []
 
 
 def plot_diagram(market_name, market_id):
@@ -55,7 +56,10 @@ def main(argv):
 
     last_trades = cryptsy_mongo.getLastTrades()
 
-    market_ids = set([int(last_trade['marketid']) for last_trade in last_trades])
+    if len(userMarketIds) > 0:
+        market_ids = userMarketIds
+    else:
+        market_ids = set([int(last_trade['marketid']) for last_trade in last_trades])
 
     for market_id in market_ids:
         market_name = next((market_name for market_name in market_data if int(market_data[market_name]) == market_id))
@@ -77,6 +81,9 @@ def getEnv(argv):
             public = arg
         elif opt == "--private":
             private = arg
+        elif opt == "--marketIds":
+            userMarketIds = [int(x) for x in arg.split(",")]
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
