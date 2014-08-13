@@ -59,13 +59,10 @@ def plot_diagram(market_name, market_id):
     prices_y = []
     market_trend = cryptsy_mongo.calculateMarketTrend(market_name, market_id)
     for hour in range(0, 24):
-        print "hour: {}".format(hour)
         time_x = datetime.utcnow() - timedelta(hours=hour)
         price_y = getNormalizedEstimatedPrice(market_trend, time_x)
         times_x.append((toCryptsyServerTime(time_x) - epoch).total_seconds())
         prices_y.append(price_y)
-    print times_x
-    print prices_y
 
     plt.plot(times, prices)
     plt.plot(buy_trade_times, buy_trade_price, 'ro')
