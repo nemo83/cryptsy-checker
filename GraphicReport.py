@@ -27,7 +27,7 @@ def getNormalizedEstimatedPrice(market_trend, time_x=datetime.utcnow()):
                                    market_trend.m, market_trend.n,
                                    market_trend.minX, market_trend.scalingFactorX,
                                    market_trend.minY, market_trend.scalingFactorY)
-    normalizedEstimatedPrice = float(estimatedPrice) / 100000000
+    normalizedEstimatedPrice = float(estimatedPrice) / 1000000000
     return normalizedEstimatedPrice
 
 
