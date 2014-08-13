@@ -70,7 +70,7 @@ def plot_diagram(market_name, market_id):
     plt.plot(times, prices)
     plt.plot(buy_trade_times, buy_trade_price, 'ro')
     plt.plot(sell_trade_times, sell_trade_price, 'go')
-    plt.plot(times_x, prices_y, 'bo')
+    plt.plot(times_x, prices_y, 'ko')
     plt.savefig("{}.png".format("{}-{}".format(market_name.replace('/', '-'), market_id)), format='png')
     plt.close()
 
