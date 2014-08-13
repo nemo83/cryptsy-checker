@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
-import sys, getopt
+import sys
+import getopt
 
 import matplotlib.pyplot as plt
 
 from CryptsyMongo import CryptsyMongo, epoch
-from CryptsyPy import CryptsyPy
+from CryptsyPy import CryptsyPy, toCryptsyServerTime
 
 
 cryptsyClient = None
@@ -12,6 +13,22 @@ cryptsyClient = None
 public = ''
 private = ''
 userMarketIds = []
+
+
+def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
+    x_ = (float(x) - minX) / scalingFactorX
+    y_ = x_ * m + n
+    return y_ * scalingFactorY + minY
+
+
+def getNormalizedEstimatedPrice(market_trend, time_x=datetime.utcnow()):
+    timeX = (toCryptsyServerTime(time_x) - epoch).total_seconds()
+    estimatedPrice = estimateValue(timeX,
+                                   market_trend.m, market_trend.n,
+                                   market_trend.minX, market_trend.scalingFactorX,
+                                   market_trend.minY, market_trend.scalingFactorY)
+    normalizedEstimatedPrice = float(estimatedPrice) / 100000000
+    return normalizedEstimatedPrice
 
 
 def plot_diagram(market_name, market_id):
@@ -37,15 +54,28 @@ def plot_diagram(market_name, market_id):
     buy_trade_price = [trade_sample[1] for trade_sample in trade_samples if trade_sample[2] == 'Buy']
     sell_trade_times = [trade_sample[0] for trade_sample in trade_samples if trade_sample[2] == 'Sell']
     sell_trade_price = [trade_sample[1] for trade_sample in trade_samples if trade_sample[2] == 'Sell']
+
+    times_x = []
+    prices_y = []
+    market_trend = cryptsy_mongo.calculateMarketTrend("LTC/BTC", 3)
+    for hour in range(0, 12):
+        print "hour: {}".format(hour)
+        time_x = datetime.utcnow() - timedelta(hours=hour)
+        price_y = getNormalizedEstimatedPrice(market_trend, time_x)
+        times_x.append(time_x)
+        prices_y.append(price_y)
+    print times_x
+    print prices_y
+
     plt.plot(times, prices)
     plt.plot(buy_trade_times, buy_trade_price, 'ro')
     plt.plot(sell_trade_times, sell_trade_price, 'go')
+    plt.plot(times_x, prices_y, 'bo')
     plt.savefig("{}.png".format("{}-{}".format(market_name.replace('/', '-'), market_id)), format='png')
     plt.close()
 
 
 def main(argv):
-
     getEnv(argv)
 
     cryptsy_py = CryptsyPy(public=public, private=private)
@@ -64,6 +94,7 @@ def main(argv):
     for market_id in market_ids:
         market_name = next((market_name for market_name in market_data if int(market_data[market_name]) == market_id))
         plot_diagram(market_name, market_id)
+
 
 def getEnv(argv):
     global public
