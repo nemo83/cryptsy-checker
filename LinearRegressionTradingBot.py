@@ -206,7 +206,7 @@ def investBTC(btcBalance, active_markets, markets):
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
-        buy_market_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, timedelta(hours=16))
+        buy_market_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 12)
 
         if buy_market_trend.m == 0.0 or buy_market_trend.m <= -0.2 or buy_market_trend.num_samples < 20:
             logger.info(
@@ -235,12 +235,15 @@ def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
     return y_ * scalingFactorY + minY
 
 
-def getMarketTrendFor(marketName, marketId, interval=timedelta(days=1, hours=CRYPTSY_HOURS_DIFFERENCE)):
-    market_trend = cryptsy_mongo.calculateMarketTrend(market_name=marketName, market_id=marketId, interval=interval)
+def getMarketTrendFor(marketName, marketId, lastXHours):
+    market_trend = cryptsy_mongo.calculateMarketTrend(market_name=marketName,
+                                                      market_id=marketId,
+                                                      interval=timedelta(hours=CRYPTSY_HOURS_DIFFERENCE + lastXHours))
 
     if market_trend.std < 0:
-        logger.warn(
-            "Non positive standard deviation {} for market {}".format(market_trend.std, market_trend.marketName))
+        logger.warn("Non positive standard deviation {} for market {} on a {} hours window".format(market_trend.std,
+                                                                                                   market_trend.marketName,
+                                                                                                   lastXHours))
 
     return market_trend
 
@@ -272,7 +275,7 @@ def getOrdersToBeCancelled(markets):
 
             market_name = next((market_name for market_name in markets if (markets[market_name] == openOrder[0])), None)
 
-            market_trend = getMarketTrendFor(market_name, openOrder[0])
+            market_trend = getMarketTrendFor(market_name, openOrder[0], 6)
 
             sellPrice = toEightDigit(getSellPrice(market_trend))
 
@@ -308,7 +311,7 @@ def getSellPrice(market_trend):
 
 
 def placeSellOrder(marketName, marketId, quantity):
-    market_trend = getMarketTrendFor(marketName, marketId, timedelta(hours=16))
+    market_trend = getMarketTrendFor(marketName, marketId, 6)
     if market_trend.m == 0.0:
         logger.info("No sell order for market {} will be placed. Not enough sale info.".format(marketName))
         return
