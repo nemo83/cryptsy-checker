@@ -10,16 +10,6 @@ from pymongo import MongoClient
 from CryptsyPy import CryptsyPy, toEightDigit, fromCryptsyServerTime, toCryptsyServerTime, CRYPTSY_HOURS_DIFFERENCE
 from CryptsyMongo import CryptsyMongo
 
-
-
-
-
-
-
-
-
-
-
 # create logger
 logger = logging.getLogger("bot_logger")
 logger.setLevel(logging.DEBUG)

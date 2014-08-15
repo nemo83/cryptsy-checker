@@ -1,8 +1,10 @@
 from datetime import timedelta, datetime
+import logging
 
 import numpy
 from pymongo import MongoClient
 
+logger = logging.getLogger("bot_logger")
 
 epoch = datetime.utcfromtimestamp(0)
 
@@ -54,10 +56,11 @@ class CryptsyMongo:
         self.market_trend_collection.insert(market_trend_dict)
 
     def calculateMarketTrend(self, market_name, market_id, interval=timedelta(days=1, hours=4)):
-        timeStart = datetime.utcnow() - interval
+
+        start_time = datetime.utcnow() - interval
 
         cryptoCurrencyDataSamples = self.markets_collection.find(
-            {"name": market_name, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d %H:%M:%S")}})
+            {"name": market_name, "lasttradetime": {"$gt": start_time.strftime("%Y-%m-%d %H:%M:%S")}})
 
         tradeData = [(cryptoCurrencySample['lasttradetime'], cryptoCurrencySample['lasttradeprice']) for
                      cryptoCurrencySample in cryptoCurrencyDataSamples]
@@ -80,13 +83,19 @@ class CryptsyMongo:
 
         normalizedPrices, minPrice, priceScalingFactor = normalizeValues(prices)
 
-        currencyTrend = numpy.polyfit(normalizedTimes, normalizedPrices, 1)
+        trend = numpy.polyfit(normalizedTimes, normalizedPrices, 1)
 
         prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
 
+        translated_prices = [normalizedPrice - (normalizedTimes[index] * trend.m + trend.n) for index, normalizedPrice
+                             in enumerate(normalizedPrices)]
+
+        logger.info("avg of translated_price should be 0: {}".format(numpy.avg(translated_prices)))
+        logger.info("translated_price std: {} normal std: {}".format(numpy.std(translated_prices), numpy.std(prices)))
+
         marketTrend = MarketTrend(marketName=market_name, marketId=market_id,
-                                  m=currencyTrend[0],
-                                  n=currencyTrend[1],
+                                  m=trend[0],
+                                  n=trend[1],
                                   minX=minTime,
                                   scalingFactorX=timeScalingFactor,
                                   minY=minPrice,
@@ -265,13 +274,11 @@ class MarketTrend:
         self.scalingFactorY = scalingFactorY
         self.avg = avg
         self.std = std
-        self.buy = avg - std
-        self.sell = avg + std
         self.num_samples = num_samples
         self.sample_time = sample_time
 
     def __str__(self):
-        return "marketName: {}, id: {}, m: {}, n: {}, minX: {}, scalingFactorX: {}, minY: {}, scalingFactorY: {}, avg: {}, std: {}, buy: {}, sell: {}, num samples: {}, sample_time: {}".format(
+        return "marketName: {}, id: {}, m: {}, n: {}, minX: {}, scalingFactorX: {}, minY: {}, scalingFactorY: {}, avg: {}, std: {}, num samples: {}, sample_time: {}".format(
             self.marketName,
             self.marketId,
             self.m,
@@ -282,8 +289,6 @@ class MarketTrend:
             self.scalingFactorY,
             self.avg,
             self.std,
-            self.buy,
-            self.sell,
             self.num_samples,
             self.sample_time
         )
@@ -299,8 +304,6 @@ class MarketTrend:
                 and self.minY == other.minY
                 and self.scalingFactorY == other.scalingFactorY
                 and self.std == other.std
-                and self.buy == other.buy
-                and self.sell == other.sell
                 and self.num_samples == other.num_samples)
 
     def __ne__(self, other):
