@@ -87,8 +87,22 @@ class CryptsyMongo:
 
         prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
 
-        translated_prices = [normalizedPrice - (normalizedTimes[index] * trend[0] + trend[1]) for index, normalizedPrice
-                             in enumerate(normalizedPrices)]
+        translated_prices_1 = [normalizedPrice - (normalizedTimes[index] * trend[0] + trend[1]) for
+                               index, normalizedPrice
+                               in enumerate(normalizedPrices)]
+
+        logger.info("avg of translated_price should be 0: {}".format(numpy.average(translated_prices_1)))
+        logger.info("translated_price std: {} normal std: {}".format(numpy.std(translated_prices_1), numpy.std(prices)))
+
+        ####-----
+
+        translated_prices_2 = [price - (
+        self.estimateValue(times[index], trend[0], trend[1], minTime, timeScalingFactor, minPrice, priceScalingFactor))
+                               for index, price in enumerate(prices)]
+        translated_prices_2 = [float(translated_price) / 100000000 for translated_price in translated_prices_2]
+
+        logger.info("avg of translated_price should be 0: {}".format(numpy.average(translated_prices_2)))
+        logger.info("translated_price std: {} normal std: {}".format(numpy.std(translated_prices_2), numpy.std(prices)))
 
         marketTrend = MarketTrend(marketName=market_name, marketId=market_id,
                                   m=trend[0],
@@ -98,10 +112,24 @@ class CryptsyMongo:
                                   minY=minPrice,
                                   scalingFactorY=priceScalingFactor,
                                   avg=numpy.average(prices),
-                                  std=numpy.std(translated_prices),
+                                  std=numpy.std(prices),
                                   num_samples=num_samples)
 
         return marketTrend
+
+    def estimateValue(self, x, m, n, minX, scalingFactorX, minY, scalingFactorY):
+        x_ = (float(x) - minX) / scalingFactorX
+        y_ = x_ * m + n
+        return y_ * scalingFactorY + minY
+
+    def getNormalizedEstimatedPrice(self, market_trend, price_time=datetime.utcnow()):
+        timeX = (price_time - self.timezone_delta - epoch).total_seconds()
+        estimatedPrice = self.estimateValue(timeX,
+                                            market_trend.m, market_trend.n,
+                                            market_trend.minX, market_trend.scalingFactorX,
+                                            market_trend.minY, market_trend.scalingFactorY)
+        normalizedEstimatedPrice = float(estimatedPrice) / 100000000
+        return normalizedEstimatedPrice
 
     def persistTrades(self, trades):
         latest_trade = next(self.trades_collection.find().sort('tradeid', -1).limit(1), None)
@@ -114,29 +142,6 @@ class CryptsyMongo:
         return self.trades_collection.find({"datetime": {"$gt": time_start.strftime("%Y-%m-%d %H:%M:%S")}}).sort(
             'tradeid', 1)
 
-    def getAllTradesInTheLast(self, time_start):
-
-        trades = self.getLastTrades(time_start)
-
-        tradeStats = {}
-        for trade in trades:
-            marketid = trade['marketid']
-            tradetype = trade['tradetype']
-            total = trade['total']
-            fee = trade['fee']
-
-            if marketid not in tradeStats:
-                tradeStats[marketid] = {}
-                tradeStats[marketid]['NumTrades'] = 0.0
-                tradeStats[marketid]['Buy'] = 0.0
-                tradeStats[marketid]['Sell'] = 0.0
-                tradeStats[marketid]['Fee'] = 0.0
-
-            tradeStats[marketid]['NumTrades'] += 1
-            tradeStats[marketid][tradetype] += float(total)
-            tradeStats[marketid]['Fee'] += float(fee)
-
-        return tradeStats
 
     def getAllTradesFrom(self, time_start):
 

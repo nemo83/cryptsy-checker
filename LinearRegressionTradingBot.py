@@ -219,12 +219,6 @@ def investBTC(btcBalance, active_markets, markets):
             btcBalance -= amountToInvest
 
 
-def estimateValue(x, m, n, minX, scalingFactorX, minY, scalingFactorY):
-    x_ = (float(x) - minX) / scalingFactorX
-    y_ = x_ * m + n
-    return y_ * scalingFactorY + minY
-
-
 def getMarketTrendFor(marketName, marketId, lastXHours):
     market_trend = cryptsy_mongo.calculateMarketTrend(market_name=marketName,
                                                       market_id=marketId,
@@ -280,23 +274,13 @@ def getOrdersToBeCancelled(markets):
     return ordersToBeCancelled
 
 
-def getNormalizedEstimatedPrice(market_trend):
-    timeX = (toCryptsyServerTime(datetime.utcnow()) - epoch).total_seconds()
-    estimatedPrice = estimateValue(timeX,
-                                   market_trend.m, market_trend.n,
-                                   market_trend.minX, market_trend.scalingFactorX,
-                                   market_trend.minY, market_trend.scalingFactorY)
-    normalizedEstimatedPrice = float(estimatedPrice) / 100000000
-    return normalizedEstimatedPrice
-
-
 def getBuyPrice(market_trend):
-    normalizedEstimatedPrice = getNormalizedEstimatedPrice(market_trend)
+    normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
     return normalizedEstimatedPrice - market_trend.std
 
 
 def getSellPrice(market_trend):
-    normalizedEstimatedPrice = getNormalizedEstimatedPrice(market_trend)
+    normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
     return normalizedEstimatedPrice + market_trend.std
 
 
