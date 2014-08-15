@@ -97,7 +97,7 @@ class CryptsyMongo:
         ####-----
         try:
             logger.info(
-                "x:{}, m: {}, n: {}, minTime: {}, timeScalingFactor: {}, minPrice: {}, priceScalingFactor".format(
+                "x:{}, m: {}, n: {}, minTime: {}, timeScalingFactor: {}, minPrice: {}, priceScalingFactor: {}".format(
                     times[index], trend[0], trend[1], minTime, timeScalingFactor, minPrice,
                     priceScalingFactor))
             translated_prices_2 = [price - (
