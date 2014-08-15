@@ -89,7 +89,7 @@ class CryptsyMongo:
 
         trend = numpy.polyfit(normalizedTimes, normalizedPrices, 1)
 
-        # prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
+        uniq_prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
 
         translated_prices_1 = [normalizedPrice - (normalizedTimes[index] * trend[0] + trend[1]) for
                                index, normalizedPrice
@@ -98,7 +98,7 @@ class CryptsyMongo:
         logger.info("market_name: {}, market_id: {}".format(market_name, market_id))
         logger.info("avg of translated_price should be 0: {}".format(toTenDigit(numpy.average(translated_prices_1))))
         logger.info("translated_price std: {} normal std: {}".format(toTenDigit(numpy.std(translated_prices_1)),
-                                                                     toTenDigit(numpy.std(prices))))
+                                                                     toTenDigit(numpy.std(uniq_prices))))
 
         marketTrend = MarketTrend(marketName=market_name, marketId=market_id,
                                   m=trend[0],
@@ -107,8 +107,8 @@ class CryptsyMongo:
                                   scalingFactorX=timeScalingFactor,
                                   minY=minPrice,
                                   scalingFactorY=priceScalingFactor,
-                                  avg=numpy.average(prices),
-                                  std=numpy.std(prices),
+                                  avg=numpy.average(uniq_prices),
+                                  std=numpy.std(uniq_prices),
                                   num_samples=num_samples)
 
         ####-----
@@ -128,7 +128,7 @@ class CryptsyMongo:
                 "avg of translated_prices_2 should be 0: {}".format(toTenDigit(numpy.average(translated_prices_2))))
             logger.info(
                 "translated_prices_2 std: {} normal std: {}".format(toTenDigit(numpy.std(translated_prices_2)),
-                                                                    toTenDigit(numpy.std(prices))))
+                                                                    toTenDigit(numpy.std(uniq_prices))))
         except Exception, ex:
             logger.exception("Unexpected error")
 
