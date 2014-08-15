@@ -95,11 +95,13 @@ class CryptsyMongo:
                                index, normalizedPrice
                                in enumerate(normalizedPrices)]
 
-        logger.info("avg of translated_price should be 0: {}".format(numpy.average(translated_prices_1)))
-        logger.info("translated_price std: {} normal std: {}".format(numpy.std(translated_prices_1), numpy.std(prices)))
+        logger.info("avg of translated_price should be 0: {}".format(toTenDigit(numpy.average(translated_prices_1))))
+        logger.info("translated_price std: {} normal std: {}".format(toTenDigit(numpy.std(translated_prices_1)),
+                                                                     toTenDigit(numpy.std(prices))))
 
         ####-----
         try:
+            logger.info("market_name: {}, market_id: {}".format(market_name, market_id))
             logger.info(
                 "x:{}, m: {}, n: {}, minTime: {}, timeScalingFactor: {}, minPrice: {}, priceScalingFactor: {}".format(
                     times[index], trend[0], trend[1], minTime, timeScalingFactor, minPrice,
