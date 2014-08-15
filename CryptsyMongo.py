@@ -89,7 +89,7 @@ class CryptsyMongo:
 
         trend = numpy.polyfit(normalizedTimes, normalizedPrices, 1)
 
-        prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
+        # prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
 
         translated_prices_1 = [normalizedPrice - (normalizedTimes[index] * trend[0] + trend[1]) for
                                index, normalizedPrice
@@ -99,27 +99,6 @@ class CryptsyMongo:
         logger.info("avg of translated_price should be 0: {}".format(toTenDigit(numpy.average(translated_prices_1))))
         logger.info("translated_price std: {} normal std: {}".format(toTenDigit(numpy.std(translated_prices_1)),
                                                                      toTenDigit(numpy.std(prices))))
-
-        ####-----
-        try:
-            logger.info(
-                "x:{}, m: {}, n: {}, minTime: {}, timeScalingFactor: {}, minPrice: {}, priceScalingFactor: {}".format(
-                    times[index], trend[0], trend[1], minTime, timeScalingFactor, minPrice,
-                    priceScalingFactor))
-            translated_prices_2 = [price - (
-                self.estimateValue(times[index], trend[0], trend[1], minTime, timeScalingFactor, minPrice,
-                                   priceScalingFactor))
-                                   for index, price in enumerate(prices)]
-            translated_prices_2 = [float(translated_price) / 100000000 for translated_price in translated_prices_2]
-
-            logger.info(
-                "avg of translated_prices_2 should be 0: {}".format(toTenDigit(numpy.average(translated_prices_2))))
-            logger.info(
-                "translated_prices_2 std: {} normal std: {}".format(toTenDigit(numpy.std(translated_prices_2)),
-                                                                    toTenDigit(numpy.std(prices))))
-
-        except Exception, ex:
-            logger.exception("Unexpected error")
 
         marketTrend = MarketTrend(marketName=market_name, marketId=market_id,
                                   m=trend[0],
@@ -131,6 +110,27 @@ class CryptsyMongo:
                                   avg=numpy.average(prices),
                                   std=numpy.std(prices),
                                   num_samples=num_samples)
+
+        ####-----
+        try:
+            logger.info(
+                "x:{}, m: {}, n: {}, minTime: {}, timeScalingFactor: {}, minPrice: {}, priceScalingFactor: {}".format(
+                    times[index], marketTrend.m, marketTrend.n,
+                    marketTrend.minX, marketTrend.scalingFactorX,
+                    marketTrend.minY, marketTrend.scalingFactorY))
+            translated_prices_2 = [price - (self.estimateValue(times[index], marketTrend.m, marketTrend.n,
+                                                               marketTrend.minX, marketTrend.scalingFactorX,
+                                                               marketTrend.minY, marketTrend.scalingFactorY))
+                                   for index, price in enumerate(prices)]
+            translated_prices_2 = [float(translated_price) / 100000000 for translated_price in translated_prices_2]
+
+            logger.info(
+                "avg of translated_prices_2 should be 0: {}".format(toTenDigit(numpy.average(translated_prices_2))))
+            logger.info(
+                "translated_prices_2 std: {} normal std: {}".format(toTenDigit(numpy.std(translated_prices_2)),
+                                                                    toTenDigit(numpy.std(prices))))
+        except Exception, ex:
+            logger.exception("Unexpected error")
 
         return marketTrend
 
