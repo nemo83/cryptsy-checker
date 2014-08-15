@@ -90,7 +90,7 @@ class CryptsyMongo:
         translated_prices = [normalizedPrice - (normalizedTimes[index] * trend[0] + trend[1]) for index, normalizedPrice
                              in enumerate(normalizedPrices)]
 
-        logger.info("avg of translated_price should be 0: {}".format(numpy.avg(translated_prices)))
+        logger.info("avg of translated_price should be 0: {}".format(numpy.average(translated_prices)))
         logger.info("translated_price std: {} normal std: {}".format(numpy.std(translated_prices), numpy.std(prices)))
 
         marketTrend = MarketTrend(marketName=market_name, marketId=market_id,
