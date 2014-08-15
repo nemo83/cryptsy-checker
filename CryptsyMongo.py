@@ -87,7 +87,7 @@ class CryptsyMongo:
 
         prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
 
-        translated_prices = [normalizedPrice - (normalizedTimes[index] * trend.m + trend.n) for index, normalizedPrice
+        translated_prices = [normalizedPrice - (normalizedTimes[index] * trend[0] + trend[1]) for index, normalizedPrice
                              in enumerate(normalizedPrices)]
 
         logger.info("avg of translated_price should be 0: {}".format(numpy.avg(translated_prices)))
