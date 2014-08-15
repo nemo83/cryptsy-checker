@@ -96,9 +96,10 @@ class CryptsyMongo:
 
         ####-----
         try:
-            print "x:{}, m: {}, n: {}, minTime: {}, timeScalingFactor: {}, minPrice: {}, priceScalingFactor".format(
-                times[index], trend[0], trend[1], minTime, timeScalingFactor, minPrice,
-                priceScalingFactor)
+            logger.info(
+                "x:{}, m: {}, n: {}, minTime: {}, timeScalingFactor: {}, minPrice: {}, priceScalingFactor".format(
+                    times[index], trend[0], trend[1], minTime, timeScalingFactor, minPrice,
+                    priceScalingFactor))
             translated_prices_2 = [price - (
                 self.estimateValue(times[index], trend[0], trend[1], minTime, timeScalingFactor, minPrice,
                                    priceScalingFactor))
