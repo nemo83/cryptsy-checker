@@ -125,26 +125,26 @@ def investBTC(btcBalance, active_markets, markets):
 
     logger.info("sorted_market_trends_to_bet_on_ids: {}".format(sorted_market_trends_to_bet_on_ids))
 
-    best_markets_last_24h = cryptsy_mongo.getBestPerformingMarketsFrom(
-        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=24)))
+    best_markets_last_12h = cryptsy_mongo.getBestPerformingMarketsFrom(
+        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=12)))
 
-    logger.info("best_markets_last_24h: {}".format(best_markets_last_24h))
+    logger.info("best_markets_last_12h: {}".format(best_markets_last_12h))
 
     worst_markets_last_6h = cryptsy_mongo.getWorstPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=6)))
 
     logger.info("worst_markets_last_6h: {}".format(worst_markets_last_6h))
 
-    worst_markets_last_24h = cryptsy_mongo.getWorstPerformingMarketsFrom(
-        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=24)))
+    worst_markets_last_12h = cryptsy_mongo.getWorstPerformingMarketsFrom(
+        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=12)))
 
-    logger.info("worst_markets_last_24h: {}".format(worst_markets_last_24h))
+    logger.info("worst_markets_last_12h: {}".format(worst_markets_last_12h))
 
-    worst_performing_markets = [int(market_id) for market_id in set(worst_markets_last_6h + worst_markets_last_24h)]
+    worst_performing_markets = [int(market_id) for market_id in set(worst_markets_last_6h + worst_markets_last_12h)]
 
     logger.info("worst_performing_markets: {}".format(worst_performing_markets))
 
-    best_performing_markets = [int(market) for market in best_markets_last_24h if
+    best_performing_markets = [int(market) for market in best_markets_last_12h if
                                int(market) not in worst_performing_markets]
 
     logger.info("best_performing_markets: {}".format(best_performing_markets))
