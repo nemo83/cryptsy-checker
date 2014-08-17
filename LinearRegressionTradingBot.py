@@ -210,10 +210,10 @@ def investBTC(btcBalance, active_markets, markets):
 
         if buy_market_trend.m > six_hours_trend.m > three_hours_trend.m < 0.1:
             logger.info(
-                "Market {} has 12h m: {} 6h m: {} 3h m: {}".format(buy_market_trend.marketName, buy_market_trend.m,
-                                                                   buy_market_trend.num_samples,
-                                                                   six_hours_trend.num_samples,
-                                                                   three_hours_trend.num_samples))
+                "Market {} has 12h m: {} 6h m: {} 3h m: {}".format(buy_market_trend.marketName,
+                                                                   buy_market_trend.m,
+                                                                   six_hours_trend.m,
+                                                                   three_hours_trend.m))
 
         buyPrice = getBuyPrice(buy_market_trend)
 
