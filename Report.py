@@ -44,22 +44,17 @@ def main(argv):
                               reverse=True)
 
     for tradeStat in sortedTradeStats:
-        total_buy_best += float(mongotradeStats[tradeStat]['Buy'])
-        total_sell_best += float(mongotradeStats[tradeStat]['Sell'])
-        total_fee_best += float(mongotradeStats[tradeStat]['Fee'])
-        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat,
-                                                                         next((toEightDigit(market_trend.std) for
-                                                                               market_trend in recent_market_trends if
-                                                                               int(market_trend.marketId) == int(
-                                                                                   tradeStat)), None),
-                                                                         toEightDigit(
-                                                                             mongotradeStats[tradeStat]['Sell']),
-                                                                         toEightDigit(
-                                                                             mongotradeStats[tradeStat]['Buy']),
-                                                                         toEightDigit(
-                                                                             mongotradeStats[tradeStat]['Sell'] -
-                                                                             mongotradeStats[tradeStat][
-                                                                                 'Buy']))
+        sell = mongotradeStats[tradeStat]['Sell']
+        buy = mongotradeStats[tradeStat]['Buy']
+        fee = mongotradeStats[tradeStat]['Fee']
+
+        total_buy_best += float(buy)
+        total_sell_best += float(sell)
+        total_fee_best += float(fee)
+
+        std = next((toEightDigit(market_trend.std) for market_trend in recent_market_trends if
+                    int(market_trend.marketId) == int(tradeStat)), None)
+        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, toEightDigit(std), toEightDigit(sell), toEightDigit(buy), toEightDigit(sell - buy - fee))
 
     print "Best markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_best, total_sell_best,
                                                                                 total_fee_best,
@@ -76,30 +71,17 @@ def main(argv):
     sortedTradeStats = sorted(filteredTradeStats, key=lambda x: mongotradeStats[x]['Sell'] - mongotradeStats[x]['Buy'])
 
     for tradeStat in sortedTradeStats:
-        total_buy_worst += float(mongotradeStats[tradeStat]['Buy'])
-        total_sell_worst += float(mongotradeStats[tradeStat]['Sell'])
-        total_fee_worst += float(mongotradeStats[tradeStat]['Fee'])
-        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Fee: {}, Earn: {}".format(tradeStat,
-                                                                                  next((toEightDigit(market_trend.std)
-                                                                                        for market_trend in
-                                                                                        recent_market_trends if int(
-                                                                                      market_trend.marketId) == int(
-                                                                                      tradeStat)), None),
-                                                                                  toEightDigit(
-                                                                                      mongotradeStats[tradeStat][
-                                                                                          'Sell']),
-                                                                                  toEightDigit(
-                                                                                      mongotradeStats[tradeStat][
-                                                                                          'Buy']),
-                                                                                  toEightDigit(
-                                                                                      mongotradeStats[tradeStat][
-                                                                                          'Fee']),
-                                                                                  toEightDigit(
-                                                                                      mongotradeStats[tradeStat][
-                                                                                          'Sell'] -
-                                                                                      mongotradeStats[tradeStat]['Buy'],
-                                                                                      mongotradeStats[tradeStat][
-                                                                                          'Fee']))
+        sell = mongotradeStats[tradeStat]['Sell']
+        buy = mongotradeStats[tradeStat]['Buy']
+        fee = mongotradeStats[tradeStat]['Fee']
+
+        total_buy_worst += float(buy)
+        total_sell_worst += float(sell)
+        total_fee_worst += float(fee)
+
+        std = next((toEightDigit(market_trend.std) for market_trend in recent_market_trends if
+                    int(market_trend.marketId) == int(tradeStat)), None)
+        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, toEightDigit(std), toEightDigit(sell), toEightDigit(buy), toEightDigit(sell - buy - fee))
 
     print "Worst markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_worst, total_sell_worst,
                                                                                  total_fee_worst,
