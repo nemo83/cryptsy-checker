@@ -54,7 +54,7 @@ def main(argv):
 
         std = next((toEightDigit(market_trend.std) for market_trend in recent_market_trends if
                     int(market_trend.marketId) == int(tradeStat)), None)
-        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, toEightDigit(std),
+        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, std,
                                                                          toEightDigit(sell), toEightDigit(buy),
                                                                          toEightDigit(sell - buy - fee))
 
@@ -83,7 +83,7 @@ def main(argv):
 
         std = next((toEightDigit(market_trend.std) for market_trend in recent_market_trends if
                     int(market_trend.marketId) == int(tradeStat)), None)
-        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, toEightDigit(std),
+        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, std,
                                                                          toEightDigit(sell), toEightDigit(buy),
                                                                          toEightDigit(sell - buy - fee))
 
