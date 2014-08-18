@@ -33,7 +33,7 @@ def getNormalizedEstimatedPrice(market_trend, time_x=datetime.utcnow()):
 
 def plot_diagram(market_name, market_id):
     interval = timedelta(days=1, hours=4)
-    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    cryptsy_mongo = CryptsyMongo(host="192.168.1.33")
     timeStart = datetime.utcnow() - interval
     cryptoCurrencyDataSamples = cryptsy_mongo.markets_collection.find(
         {"name": market_name, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d %H:%M:%S")}})
@@ -79,7 +79,7 @@ def main(argv):
 
     market_data = cryptsy_py.getMarkets()
 
-    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    cryptsy_mongo = CryptsyMongo(host="192.168.1.33")
 
     last_trades = cryptsy_mongo.getLastTrades()
 

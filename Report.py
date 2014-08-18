@@ -21,7 +21,7 @@ def main(argv):
 
     global cryptsy_client
     cryptsy_client = CryptsyPy(public, private)
-    # cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    # cryptsy_mongo = CryptsyMongo(host="192.168.1.33")
     cryptsy_mongo = CryptsyMongo()
 
     recent_market_trends = cryptsy_mongo.getRecentMarketTrends()

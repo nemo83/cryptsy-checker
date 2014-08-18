@@ -32,7 +32,7 @@ def getNormalizedEstimatedPrice(market_trend, time_x=datetime.utcnow()):
 def trading_history(market_name, market_id):
     interval = timedelta(days=1, hours=4)
 
-    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    cryptsy_mongo = CryptsyMongo(host="192.168.1.33")
 
     timeStart = datetime.utcnow() - interval
     trades = cryptsy_mongo.trades_collection.find(
@@ -51,7 +51,7 @@ def main(argv):
 
     market_data = cryptsy_py.getMarkets()
 
-    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    cryptsy_mongo = CryptsyMongo(host="192.168.1.33")
 
     last_trades = cryptsy_mongo.getLastTrades()
 

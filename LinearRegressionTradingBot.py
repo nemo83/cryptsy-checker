@@ -245,12 +245,12 @@ def initCryptsyClient():
 
 def initMongoClient():
     global mongoClient, mongoCryptsyDb, mongoMarketsCollection, cryptsy_mongo
-    mongoClient = MongoClient(host="192.168.1.29")
+    mongoClient = MongoClient(host="192.168.1.33")
     # mongoClient = MongoClient()
     mongoCryptsyDb = mongoClient.cryptsy_database
     mongoMarketsCollection = mongoCryptsyDb.markets_collection
 
-    cryptsy_mongo = CryptsyMongo(host="192.168.1.29")
+    cryptsy_mongo = CryptsyMongo(host="192.168.1.33")
     # cryptsy_mongo = CryptsyMongo()
 
 
