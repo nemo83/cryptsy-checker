@@ -44,17 +44,19 @@ def main(argv):
                               reverse=True)
 
     for tradeStat in sortedTradeStats:
-        sell = mongotradeStats[tradeStat]['Sell']
-        buy = mongotradeStats[tradeStat]['Buy']
-        fee = mongotradeStats[tradeStat]['Fee']
+        sell = float(mongotradeStats[tradeStat]['Sell'])
+        buy = float(mongotradeStats[tradeStat]['Buy'])
+        fee = float(mongotradeStats[tradeStat]['Fee'])
 
-        total_buy_best += float(buy)
-        total_sell_best += float(sell)
-        total_fee_best += float(fee)
+        total_buy_best += buy
+        total_sell_best += sell
+        total_fee_best += fee
 
         std = next((toEightDigit(market_trend.std) for market_trend in recent_market_trends if
                     int(market_trend.marketId) == int(tradeStat)), None)
-        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, toEightDigit(std), toEightDigit(sell), toEightDigit(buy), toEightDigit(sell - buy - fee))
+        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, toEightDigit(std),
+                                                                         toEightDigit(sell), toEightDigit(buy),
+                                                                         toEightDigit(sell - buy - fee))
 
     print "Best markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_best, total_sell_best,
                                                                                 total_fee_best,
@@ -71,17 +73,19 @@ def main(argv):
     sortedTradeStats = sorted(filteredTradeStats, key=lambda x: mongotradeStats[x]['Sell'] - mongotradeStats[x]['Buy'])
 
     for tradeStat in sortedTradeStats:
-        sell = mongotradeStats[tradeStat]['Sell']
-        buy = mongotradeStats[tradeStat]['Buy']
-        fee = mongotradeStats[tradeStat]['Fee']
+        sell = float(mongotradeStats[tradeStat]['Sell'])
+        buy = float(mongotradeStats[tradeStat]['Buy'])
+        fee = float(mongotradeStats[tradeStat]['Fee'])
 
-        total_buy_worst += float(buy)
-        total_sell_worst += float(sell)
-        total_fee_worst += float(fee)
+        total_buy_worst += buy
+        total_sell_worst += sell
+        total_fee_worst += fee
 
         std = next((toEightDigit(market_trend.std) for market_trend in recent_market_trends if
                     int(market_trend.marketId) == int(tradeStat)), None)
-        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, toEightDigit(std), toEightDigit(sell), toEightDigit(buy), toEightDigit(sell - buy - fee))
+        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, toEightDigit(std),
+                                                                         toEightDigit(sell), toEightDigit(buy),
+                                                                         toEightDigit(sell - buy - fee))
 
     print "Worst markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_worst, total_sell_worst,
                                                                                  total_fee_worst,
