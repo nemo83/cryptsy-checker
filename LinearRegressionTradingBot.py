@@ -7,7 +7,7 @@ from time import sleep
 
 from pymongo import MongoClient
 
-from CryptsyPy import CryptsyPy, toEightDigit, fromCryptsyServerTime, toCryptsyServerTime, CRYPTSY_HOURS_DIFFERENCE
+from CryptsyPy import CryptsyPy, fromCryptsyServerTime, toCryptsyServerTime, CRYPTSY_HOURS_DIFFERENCE
 from CryptsyMongo import CryptsyMongo
 
 # create logger
@@ -264,24 +264,10 @@ def getOrdersToBeCancelled(markets):
     ordersToBeCancelled = []
     for openOrder in allActiveOrders:
         openMarketNormalized = fromCryptsyServerTime(datetime.strptime(openOrder[2], '%Y-%m-%d %H:%M:%S'))
-        if openOrder[3] == 'Buy' and (openMarketNormalized + timedelta(minutes=30)) < datetime.utcnow():
+        if openOrder[3] == 'Buy' and (openMarketNormalized + timedelta(minutes=10)) < datetime.utcnow():
             ordersToBeCancelled.append(openOrder[1])
-        elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(minutes=90)) < datetime.utcnow():
-
-            market_name = next((market_name for market_name in markets if (markets[market_name] == openOrder[0])), None)
-
-            market_trend = getMarketTrendFor(market_name, openOrder[0], 6)
-
-            sellPrice = toEightDigit(getSellPrice(market_trend))
-
-            if float(sellPrice) != float(openOrder[4]):
-                logger.info(
-                    "Cancelling order for {} market. Old Price: {}, New Price: {}".format(market_name, openOrder[4],
-                                                                                          sellPrice))
-                ordersToBeCancelled.append(openOrder[1])
-            else:
-                logger.info("Sell order expired but not deleted for {} market. Old Price: {}, New Price: {}".format(
-                    market_name, openOrder[4], sellPrice))
+        elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(minutes=15)) < datetime.utcnow():
+            ordersToBeCancelled.append(openOrder[1])
     return ordersToBeCancelled
 
 
