@@ -8,7 +8,7 @@ from CryptsyMongo import CryptsyMongo
 
 public = ''
 private = ''
-days = 1
+hours = 12
 
 cryptsy_client = None
 
@@ -30,7 +30,7 @@ def main(argv):
     if recent_trades is not None:
         cryptsy_mongo.persistTrades(recent_trades)
 
-    start_time = toCryptsyServerTime(datetime.utcnow() - timedelta(days=int(days)))
+    start_time = toCryptsyServerTime(datetime.utcnow() - timedelta(hours=int(hours)))
 
     total_buy_best = 0.0
     total_sell_best = 0.0
@@ -100,9 +100,9 @@ def main(argv):
 def getEnv(argv):
     global public
     global private
-    global days
+    global hours
     try:
-        opts, args = getopt.getopt(argv, "d:h", ["help", "public=", "private="])
+        opts, args = getopt.getopt(argv, "h", ["help", "public=", "private=", "hours="])
     except getopt.GetoptError:
         sys.exit(2)
     for opt, arg in opts:
@@ -112,8 +112,8 @@ def getEnv(argv):
             public = arg
         elif opt == "--private":
             private = arg
-        elif opt == "-d":
-            days = arg
+        elif opt == "--hours":
+            hours = arg
 
 
 if __name__ == "__main__":
