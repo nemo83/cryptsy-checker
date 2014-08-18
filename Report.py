@@ -52,11 +52,14 @@ def main(argv):
                                                                                market_trend in recent_market_trends if
                                                                                int(market_trend.marketId) == int(
                                                                                    tradeStat)), None),
-                                                                         mongotradeStats[tradeStat]['Sell'],
-                                                                         mongotradeStats[tradeStat]['Buy'],
-                                                                         mongotradeStats[tradeStat]['Sell'] -
-                                                                         mongotradeStats[tradeStat][
-                                                                             'Buy'])
+                                                                         toEightDigit(
+                                                                             mongotradeStats[tradeStat]['Sell']),
+                                                                         toEightDigit(
+                                                                             mongotradeStats[tradeStat]['Buy']),
+                                                                         toEightDigit(
+                                                                             mongotradeStats[tradeStat]['Sell'] -
+                                                                             mongotradeStats[tradeStat][
+                                                                                 'Buy']))
 
     print "Best markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_best, total_sell_best,
                                                                                 total_fee_best,
@@ -82,12 +85,21 @@ def main(argv):
                                                                                         recent_market_trends if int(
                                                                                       market_trend.marketId) == int(
                                                                                       tradeStat)), None),
-                                                                                  mongotradeStats[tradeStat]['Sell'],
-                                                                                  mongotradeStats[tradeStat]['Buy'],
-                                                                                  mongotradeStats[tradeStat]['Fee'],
-                                                                                  mongotradeStats[tradeStat]['Sell'] -
-                                                                                  mongotradeStats[tradeStat]['Buy'],
-                                                                                  mongotradeStats[tradeStat]['Fee'])
+                                                                                  toEightDigit(
+                                                                                      mongotradeStats[tradeStat][
+                                                                                          'Sell']),
+                                                                                  toEightDigit(
+                                                                                      mongotradeStats[tradeStat][
+                                                                                          'Buy']),
+                                                                                  toEightDigit(
+                                                                                      mongotradeStats[tradeStat][
+                                                                                          'Fee']),
+                                                                                  toEightDigit(
+                                                                                      mongotradeStats[tradeStat][
+                                                                                          'Sell'] -
+                                                                                      mongotradeStats[tradeStat]['Buy'],
+                                                                                      mongotradeStats[tradeStat][
+                                                                                          'Fee']))
 
     print "Worst markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_worst, total_sell_worst,
                                                                                  total_fee_worst,
