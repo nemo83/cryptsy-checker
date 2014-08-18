@@ -135,12 +135,7 @@ def investBTC(btcBalance, active_markets, markets):
 
     logger.info("worst_markets_last_6h: {}".format(worst_markets_last_6h))
 
-    worst_markets_last_12h = cryptsy_mongo.getWorstPerformingMarketsFrom(
-        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=12)))
-
-    logger.info("worst_markets_last_12h: {}".format(worst_markets_last_12h))
-
-    worst_performing_markets = [int(market_id) for market_id in set(worst_markets_last_6h + worst_markets_last_12h)]
+    worst_performing_markets = [int(market_id) for market_id in set(worst_markets_last_6h)]
 
     logger.info("worst_performing_markets: {}".format(worst_performing_markets))
 
@@ -196,26 +191,26 @@ def investBTC(btcBalance, active_markets, markets):
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
-        buy_market_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 12)
+        twelve_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 12)
 
-        if buy_market_trend.m == 0.0 or buy_market_trend.m < -0.3 or buy_market_trend.num_samples < 20:
+        if twelve_hours_trend.m == 0.0 or twelve_hours_trend.m < -0.3 or twelve_hours_trend.num_samples < 20:
             logger.info(
-                "Market {} has m: {} and number samples: {}".format(buy_market_trend.marketName, buy_market_trend.m,
-                                                                    buy_market_trend.num_samples))
+                "Market {} has m: {} and number samples: {}".format(twelve_hours_trend.marketName, twelve_hours_trend.m,
+                                                                    twelve_hours_trend.num_samples))
             continue
 
         six_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 6)
 
         three_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 3)
 
-        if buy_market_trend.m > six_hours_trend.m > three_hours_trend.m < 0.1:
+        if twelve_hours_trend.m > six_hours_trend.m > three_hours_trend.m < 0.1:
             logger.info(
-                "Market {} has 12h m: {} 6h m: {} 3h m: {}".format(buy_market_trend.marketName,
-                                                                   buy_market_trend.m,
+                "Market {} has 12h m: {} 6h m: {} 3h m: {}".format(twelve_hours_trend.marketName,
+                                                                   twelve_hours_trend.m,
                                                                    six_hours_trend.m,
                                                                    three_hours_trend.m))
 
-        buyPrice = getBuyPrice(buy_market_trend)
+        buyPrice = getBuyPrice(three_hours_trend)
 
         quantity = calculateQuantity(amountToInvest, FEE, buyPrice)
 
@@ -282,7 +277,7 @@ def getSellPrice(market_trend):
 
 
 def placeSellOrder(marketName, marketId, quantity):
-    market_trend = getMarketTrendFor(marketName, marketId, 6)
+    market_trend = getMarketTrendFor(marketName, marketId, 3)
     if market_trend.m == 0.0:
         logger.info("No sell order for market {} will be placed. Not enough sale info.".format(marketName))
         return
