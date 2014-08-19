@@ -26,7 +26,7 @@ class CryptsyMongo:
     def truncate_market_trend_collection(self):
         self.market_trend_collection.remove()
 
-    def getRecentMarketTrends(self, timedelta=timedelta(hours=1)):
+    def getRecentMarketTrends(self, timedelta=timedelta(minutes=15)):
         time_start = datetime.utcnow() - timedelta
 
         mongo_market_trends = self.market_trend_collection.find(
