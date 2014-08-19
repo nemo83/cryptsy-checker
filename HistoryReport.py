@@ -41,9 +41,9 @@ def trading_history(market_name, market_id):
     for trade in trades:
         print "{} - {}({}) - {} {} at {} - total: {}".format(datetime.strptime(trade['datetime'], '%Y-%m-%d %H:%M:%S'),
                                                              market_name, market_id, trade['tradetype'],
-                                                             toEightDigit(trade['quantity']),
+                                                             toEightDigit(float(trade['quantity'])),
                                                              toEightDigit(float(trade['tradeprice'])),
-                                                             toEightDigit(trade['total']))
+                                                             toEightDigit(float(trade['total'])))
 
 
 def main(argv):
