@@ -39,9 +39,11 @@ def trading_history(market_name, market_id):
         {"marketid": str(market_id), "datetime": {"$gt": timeStart.strftime("%Y-%m-%d %H:%M:%S")}}).sort('datetime', -1)
 
     for trade in trades:
-        print "{}({}) {} - {} at {}".format(market_name, market_id,
-                                           datetime.strptime(trade['datetime'], '%Y-%m-%d %H:%M:%S'),
-                                           toEightDigit(float(trade['tradeprice'])), trade['tradetype'])
+        print "{} - {}({}) - {} {} at {} - total: {}".format(datetime.strptime(trade['datetime'], '%Y-%m-%d %H:%M:%S'),
+                                                             market_name, market_id, trade['tradetype'],
+                                                             toEightDigit(trade['quantity']),
+                                                             toEightDigit(float(trade['tradeprice'])),
+                                                             toEightDigit(trade['total']))
 
 
 def main(argv):
