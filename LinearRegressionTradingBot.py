@@ -74,7 +74,7 @@ def getMarketTrends(inactiveBtcMarkets, markets):
 
     inactive_recent_market_trend_names = filter(lambda x: x in inactiveBtcMarkets, recent_market_trend_names)
 
-    market_trends = filter(lambda x: x.marketName in inactiveBtcMarkets and x.num_samples >= 200, recent_market_trends)
+    market_trends = filter(lambda x: x.marketName in inactiveBtcMarkets and x.num_samples >= 25, recent_market_trends)
 
     for marketName in inactiveBtcMarkets:
         if marketName not in inactive_recent_market_trend_names:
@@ -85,7 +85,7 @@ def getMarketTrends(inactiveBtcMarkets, markets):
                                                                                       market_trend.marketName))
             cryptsy_mongo.persistMarketTrend(market_trend)
 
-            if market_trend.num_samples >= 200:
+            if market_trend.num_samples >= 25:
                 market_trends.append(market_trend)
 
     marketIds = [int(market_trend.marketId) for market_trend in market_trends]
@@ -194,7 +194,7 @@ def investBTC(btcBalance, active_markets, markets):
 
         twelve_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 12)
 
-        if twelve_hours_trend.m == 0.0 or twelve_hours_trend.m < -0.3 or twelve_hours_trend.num_samples < 20:
+        if twelve_hours_trend.m == 0.0 or twelve_hours_trend.m < -0.3 or twelve_hours_trend.num_samples < 25:
             logger.info(
                 "Market {} has m: {} and number samples: {}".format(twelve_hours_trend.marketName, twelve_hours_trend.m,
                                                                     twelve_hours_trend.num_samples))
