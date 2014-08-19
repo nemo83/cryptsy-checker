@@ -40,7 +40,9 @@ def main(argv):
     filteredTradeStats = filter(
         lambda x: mongotradeStats[x]['Sell'] >= mongotradeStats[x]['Fee'] + mongotradeStats[x]['Buy'],
         mongotradeStats)
-    sortedTradeStats = sorted(filteredTradeStats, key=lambda x: mongotradeStats[x]['Sell'] - mongotradeStats[x]['Buy'],
+    sortedTradeStats = sorted(filteredTradeStats,
+                              key=lambda x: mongotradeStats[x]['Sell'] - mongotradeStats[x]['Buy'] - mongotradeStats[x][
+                                  'Fee'],
                               reverse=True)
 
     for tradeStat in sortedTradeStats:
@@ -70,7 +72,9 @@ def main(argv):
     filteredTradeStats = filter(
         lambda x: 0 < mongotradeStats[x]['Sell'] < mongotradeStats[x]['Fee'] + mongotradeStats[x]['Buy'],
         mongotradeStats)
-    sortedTradeStats = sorted(filteredTradeStats, key=lambda x: mongotradeStats[x]['Sell'] - mongotradeStats[x]['Buy'])
+    sortedTradeStats = sorted(filteredTradeStats,
+                              key=lambda x: mongotradeStats[x]['Sell'] - mongotradeStats[x]['Buy'] - mongotradeStats[x][
+                                  'Fee'])
 
     for tradeStat in sortedTradeStats:
         sell = float(mongotradeStats[tradeStat]['Sell'])
