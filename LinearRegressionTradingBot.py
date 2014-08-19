@@ -192,17 +192,17 @@ def investBTC(btcBalance, active_markets, markets):
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
-        twelve_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 12)
+        three_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 3)
 
-        if twelve_hours_trend.m == 0.0 or twelve_hours_trend.m < -0.3 or twelve_hours_trend.num_samples < 25:
+        if three_hours_trend.m == 0.0 or three_hours_trend.m < -0.1 or three_hours_trend.num_samples < 25:
             logger.info(
-                "Market {} has m: {} and number samples: {}".format(twelve_hours_trend.marketName, twelve_hours_trend.m,
-                                                                    twelve_hours_trend.num_samples))
+                "Market {} has m: {} and number samples: {}".format(three_hours_trend.marketName, three_hours_trend.m,
+                                                                    three_hours_trend.num_samples))
             continue
 
         six_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 6)
 
-        three_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 3)
+        twelve_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 12)
 
         if twelve_hours_trend.m > six_hours_trend.m > three_hours_trend.m < 0.1:
             logger.info(
