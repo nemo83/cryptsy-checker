@@ -12,11 +12,11 @@ from CryptsyMongo import CryptsyMongo
 
 # create logger
 logger = logging.getLogger("bot_logger")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # create console handler and set level to debug
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 
 # create formatter
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -98,11 +98,11 @@ def investBTC(btcBalance, active_markets, markets):
 
     btcMarketNames = filter(lambda x: 'BTC' in x and 'Points' not in x, market_names)
 
-    logger.info("activeMarkets: {}".format(active_markets))
+    logger.debug("activeMarkets: {}".format(active_markets))
 
     inactive_btc_markets = filter(lambda x: int(markets[x]) not in active_markets, btcMarketNames)
 
-    logger.info("inactive_btc_markets: {}".format(
+    logger.debug("inactive_btc_markets: {}".format(
         [int(markets[inactive_btc_market]) for inactive_btc_market in inactive_btc_markets]))
 
     market_trends, marketIds = getMarketTrends(inactive_btc_markets, markets)
@@ -111,30 +111,30 @@ def investBTC(btcBalance, active_markets, markets):
 
     sorted_market_trend_ids = [x.marketId for x in sorted_market_trends]
 
-    logger.info("sorted_market_trend_ids: {}".format(sorted_market_trend_ids))
+    logger.debug("sorted_market_trend_ids: {}".format(sorted_market_trend_ids))
 
     avg_filtered_market_trends = filter(lambda x: x.m != 0.0 and x.m >= -1 and x.avg >= 0.000001,
                                         sorted_market_trends)
 
     avg_filtered_market_trends_ids = [x.marketId for x in avg_filtered_market_trends]
 
-    logger.info("avg_filtered_market_trends_ids: {}".format(avg_filtered_market_trends_ids))
+    logger.debug("avg_filtered_market_trends_ids: {}".format(avg_filtered_market_trends_ids))
 
     sorted_market_trends_to_bet_on = filter(lambda x: x.std > 2 * (x.avg * FEE), avg_filtered_market_trends)
 
     sorted_market_trends_to_bet_on_ids = [x.marketId for x in sorted_market_trends_to_bet_on]
 
-    logger.info("sorted_market_trends_to_bet_on_ids: {}".format(sorted_market_trends_to_bet_on_ids))
+    logger.debug("sorted_market_trends_to_bet_on_ids: {}".format(sorted_market_trends_to_bet_on_ids))
 
     best_markets_last_6h = cryptsy_mongo.getBestPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=6)))
 
-    logger.info("best_markets_last_6h: {}".format(best_markets_last_6h))
+    logger.debug("best_markets_last_6h: {}".format(best_markets_last_6h))
 
     worst_markets_last_6h = cryptsy_mongo.getWorstPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=6)))
 
-    logger.info("worst_markets_last_6h: {}".format(worst_markets_last_6h))
+    logger.debug("worst_markets_last_6h: {}".format(worst_markets_last_6h))
 
     worst_performing_markets = [int(market_id) for market_id in set(worst_markets_last_6h)]
 
