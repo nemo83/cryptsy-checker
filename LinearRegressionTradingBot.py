@@ -279,19 +279,33 @@ def getSellPrice(market_trend):
 
 def placeSellOrder(marketName, marketId, quantity):
     three_hours_trend = getMarketTrendFor(marketName, marketId, 3)
+    two_hours_trend = getMarketTrendFor(marketName, marketId, 2)
     one_hour_trend = getMarketTrendFor(marketName, marketId, 1)
 
-    logger.info("Sell - {}({}) 3h m: {}, 1h m: {}".format(marketName, marketId, toEightDigit(three_hours_trend.m),
-                                                          toEightDigit(one_hour_trend.m)))
+    logger.info("Sell - {}({}) 3h m: {}, 2h m: {}, 1h m: {}".format(marketName, marketId,
+                                                                    toEightDigit(three_hours_trend.m),
+                                                                    toEightDigit(two_hours_trend.m),
+                                                                    toEightDigit(one_hour_trend.m)))
 
-    if three_hours_trend.m == 0.0:
+    if three_hours_trend.m > two_hours_trend.m > one_hour_trend.m < 0.1:
+        if one_hour_trend.m is not 0.0:
+            sell_trend = one_hour_trend
+        elif two_hours_trend.m is not 0.0:
+            sell_trend = two_hours_trend
+        else:
+            sell_trend = three_hours_trend
+
+    if sell_trend.m == 0.0:
+        sell_trend = getMarketTrendFor(marketName, marketId, 12)
+
+    if sell_trend.m == 0.0:
         logger.info("No sell order for market {} will be placed. Not enough sale info.".format(marketName))
         return
 
-    sell_price = getSellPrice(three_hours_trend)
+    sell_price = getSellPrice(sell_trend)
 
     if quantity * sell_price >= 0.00000010:
-        cryptsyClient.placeSellOrder(three_hours_trend.marketId, quantity, sell_price)
+        cryptsyClient.placeSellOrder(sell_trend.marketId, quantity, sell_price)
     else:
         logger.info("Order is less than 0.00000010: {}".format(quantity * sell_price))
 
