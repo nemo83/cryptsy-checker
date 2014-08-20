@@ -288,11 +288,15 @@ def placeSellOrder(marketName, marketId, quantity):
                                                                     toEightDigit(one_hour_trend.m)))
 
     if three_hours_trend.m > two_hours_trend.m > one_hour_trend.m < 0.1:
+        logger.info("Quick sale feature triggered!")
         if one_hour_trend.m is not 0.0:
+            logger.info("Using 1h trend")
             sell_trend = one_hour_trend
         elif two_hours_trend.m is not 0.0:
+            logger.info("Using 2h trend")
             sell_trend = two_hours_trend
         else:
+            logger.info("Using 3h trend")
             sell_trend = three_hours_trend
     else:
         sell_trend = three_hours_trend
