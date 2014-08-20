@@ -7,7 +7,7 @@ from time import sleep
 
 from pymongo import MongoClient
 
-from CryptsyPy import CryptsyPy, fromCryptsyServerTime, toCryptsyServerTime, CRYPTSY_HOURS_DIFFERENCE
+from CryptsyPy import CryptsyPy, fromCryptsyServerTime, toCryptsyServerTime, CRYPTSY_HOURS_DIFFERENCE, toEightDigit
 from CryptsyMongo import CryptsyMongo
 
 # create logger
@@ -278,15 +278,20 @@ def getSellPrice(market_trend):
 
 
 def placeSellOrder(marketName, marketId, quantity):
-    market_trend = getMarketTrendFor(marketName, marketId, 3)
-    if market_trend.m == 0.0:
+    three_hours_trend = getMarketTrendFor(marketName, marketId, 3)
+    one_hour_trend = getMarketTrendFor(marketName, marketId, 1)
+
+    logger.info("Sell - {}({}) 3h m: {}, 1h m: {}".format(marketName, marketId, toEightDigit(three_hours_trend.m),
+                                                          toEightDigit(one_hour_trend.m)))
+
+    if three_hours_trend.m == 0.0:
         logger.info("No sell order for market {} will be placed. Not enough sale info.".format(marketName))
         return
 
-    sell_price = getSellPrice(market_trend)
+    sell_price = getSellPrice(three_hours_trend)
 
     if quantity * sell_price >= 0.00000010:
-        cryptsyClient.placeSellOrder(market_trend.marketId, quantity, sell_price)
+        cryptsyClient.placeSellOrder(three_hours_trend.marketId, quantity, sell_price)
     else:
         logger.info("Order is less than 0.00000010: {}".format(quantity * sell_price))
 
