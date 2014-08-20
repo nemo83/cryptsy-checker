@@ -294,6 +294,8 @@ def placeSellOrder(marketName, marketId, quantity):
             sell_trend = two_hours_trend
         else:
             sell_trend = three_hours_trend
+    else:
+        sell_trend = three_hours_trend
 
     if sell_trend.m == 0.0:
         sell_trend = getMarketTrendFor(marketName, marketId, 12)
