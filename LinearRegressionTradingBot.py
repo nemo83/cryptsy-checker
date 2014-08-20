@@ -276,6 +276,10 @@ def getSellPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
     return normalizedEstimatedPrice + market_trend.std
 
+def getEstimatedPrice(market_trend):
+    return cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
+
+
 
 def placeSellOrder(marketName, marketId, quantity):
     three_hours_trend = getMarketTrendFor(marketName, marketId, 3)
@@ -287,8 +291,10 @@ def placeSellOrder(marketName, marketId, quantity):
                                                                     toEightDigit(two_hours_trend.m),
                                                                     toEightDigit(one_hour_trend.m)))
 
+    quick_sale = False
     if three_hours_trend.m > two_hours_trend.m > one_hour_trend.m < 0.1:
         logger.info("Quick sale feature triggered!")
+        quick_sale = True
         if one_hour_trend.m is not 0.0:
             logger.info("Using 1h trend")
             sell_trend = one_hour_trend
@@ -308,7 +314,10 @@ def placeSellOrder(marketName, marketId, quantity):
         logger.info("No sell order for market {} will be placed. Not enough sale info.".format(marketName))
         return
 
-    sell_price = getSellPrice(sell_trend)
+    if quick_sale:
+        sell_price = getEstimatedPrice(sell_trend)
+    else:
+        sell_price = getSellPrice(sell_trend)
 
     if quantity * sell_price >= 0.00000010:
         cryptsyClient.placeSellOrder(sell_trend.marketId, quantity, sell_price)
