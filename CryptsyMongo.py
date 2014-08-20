@@ -184,7 +184,7 @@ class CryptsyMongo:
 
         return trade_results
 
-    def getMarketsMultipliers(self, time_start=(datetime.utcnow() - timedelta(hours=24))):
+    def getMarketsMultipliers(self, time_start=(datetime.utcnow() - timedelta(hours=6))):
 
         mongo_trade_stats = self.getLastTrades(time_start)
 
