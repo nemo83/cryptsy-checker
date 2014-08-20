@@ -1,6 +1,7 @@
 import getopt
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+
 
 from CryptsyPy import CryptsyPy, toCryptsyServerTime, toEightDigit
 from CryptsyMongo import CryptsyMongo
@@ -8,7 +9,7 @@ from CryptsyMongo import CryptsyMongo
 
 public = ''
 private = ''
-hours = 12
+hours = None
 
 cryptsy_client = None
 
@@ -30,7 +31,11 @@ def main(argv):
     if recent_trades is not None:
         cryptsy_mongo.persistTrades(recent_trades)
 
-    start_time = toCryptsyServerTime(datetime.utcnow() - timedelta(hours=int(hours)))
+    if hours is not None:
+        start_time = toCryptsyServerTime(datetime.utcnow() - timedelta(hours=int(hours)))
+    else:
+        now = datetime.utcnow()
+        start_time = toCryptsyServerTime(datetime(now.year, now.month, now.day))
 
     total_buy_best = 0.0
     total_sell_best = 0.0
