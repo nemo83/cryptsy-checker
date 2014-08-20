@@ -200,16 +200,16 @@ def investBTC(btcBalance, active_markets, markets):
                                                                     three_hours_trend.num_samples))
             continue
 
-        six_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 6)
+        one_hour_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 1)
 
-        twelve_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 12)
+        two_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 2)
 
-        if twelve_hours_trend.m > six_hours_trend.m > three_hours_trend.m < 0.1:
+        if three_hours_trend.m > two_hours_trend.m > one_hour_trend.m < 0.1:
             logger.info(
-                "Market {} has 12h m: {} 6h m: {} 3h m: {}".format(twelve_hours_trend.marketName,
-                                                                   twelve_hours_trend.m,
-                                                                   six_hours_trend.m,
-                                                                   three_hours_trend.m))
+                "Market {} has 3h m: {} 2h m: {} 1h m: {}".format(three_hours_trend.marketName,
+                                                                  three_hours_trend.m,
+                                                                  two_hours_trend.m,
+                                                                  one_hour_trend.m))
 
         buyPrice = getBuyPrice(three_hours_trend)
 
@@ -255,14 +255,14 @@ def initMongoClient():
     # cryptsy_mongo = CryptsyMongo()
 
 
-def getOrdersToBeCancelled(markets):
+def getOrdersToBeCancelled():
     allActiveOrders = cryptsyClient.getAllActiveOrders()
     ordersToBeCancelled = []
     for openOrder in allActiveOrders:
         openMarketNormalized = fromCryptsyServerTime(datetime.strptime(openOrder[2], '%Y-%m-%d %H:%M:%S'))
-        if openOrder[3] == 'Buy' and (openMarketNormalized + timedelta(minutes=10)) < datetime.utcnow():
+        if openOrder[3] == 'Buy' and (openMarketNormalized + timedelta(minutes=5)) < datetime.utcnow():
             ordersToBeCancelled.append(openOrder[1])
-        elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(minutes=15)) < datetime.utcnow():
+        elif openOrder[3] == 'Sell' and (openMarketNormalized + timedelta(minutes=10)) < datetime.utcnow():
             ordersToBeCancelled.append(openOrder[1])
     return ordersToBeCancelled
 
@@ -295,7 +295,7 @@ def cancelOrders(ordersToBeCancelled):
     for orderToBeCancelled in ordersToBeCancelled:
         cryptsyClient.cancelOrder(orderToBeCancelled)
     if len(ordersToBeCancelled) > 0:
-        sleep(5)
+        sleep(6)
 
 
 def updateTradeHistory():
@@ -316,7 +316,7 @@ def main(argv):
 
     markets = cryptsyClient.getMarkets()
 
-    ordersToBeCancelled = getOrdersToBeCancelled(markets)
+    ordersToBeCancelled = getOrdersToBeCancelled()
 
     cancelOrders(ordersToBeCancelled)
 
@@ -326,6 +326,7 @@ def main(argv):
         logger.info("{}, {}".format(balance[0], balance[1]))
 
     btcBalance = 0.0
+    sell_order_placed = False
     for balance in balanceList:
         if balance[0] == 'BTC':
             btcBalance = balance[1]
@@ -333,8 +334,10 @@ def main(argv):
             marketName = "{}/BTC".format(balance[0])
             marketId = markets[marketName]
             placeSellOrder(marketName, marketId, balance[1])
+            sell_order_placed = True
 
-    sleep(5)
+    if sell_order_placed:
+        sleep(6)
 
     active_markets = set([2] + [int(active_order[0]) for active_order in cryptsyClient.getAllActiveOrders()])
 
