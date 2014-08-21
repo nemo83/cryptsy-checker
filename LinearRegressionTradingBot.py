@@ -128,10 +128,11 @@ def investBTC(btcBalance, active_markets, markets):
     for trend in avg_filtered_market_trends:
         logger.debug("{}({}) avg: {}, std: {}, fee: {}, earning: {}, in: {}".format(trend.marketName,
                                                                                     trend.marketId,
-                                                                                    trend.avg,
-                                                                                    trend.std,
-                                                                                    trend.avg * FEE,
-                                                                                    trend.avg * DESIRED_EARNING,
+                                                                                    toEightDigit(trend.avg),
+                                                                                    toEightDigit(trend.std),
+                                                                                    toEightDigit(trend.avg * FEE),
+                                                                                    toEightDigit(
+                                                                                        trend.avg * DESIRED_EARNING),
                                                                                     trend.std > priceVariation(trend)))
 
     # sorted_market_trends_to_bet_on = filter(lambda x: x.std > (x.avg * FEE + x.avg * DESIRED_EARNING),
@@ -292,8 +293,10 @@ def getOrdersToBeCancelled():
 def getBuyPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
     buy_price = normalizedEstimatedPrice - market_trend.std
-    logger.debug("Buy - std price: {}, margin price: {}".format(toEightDigit(buy_price), toEightDigit(
-        market_trend.avg - priceVariation(market_trend))))
+    logger.debug(
+        "Buy - std price: {}, margin price: {}, 2x margin price: {}".format(toEightDigit(buy_price), toEightDigit(
+            market_trend.avg - priceVariation(market_trend)), toEightDigit(
+            market_trend.avg - 2 * priceVariation(market_trend))))
     return buy_price
 
 
