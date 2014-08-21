@@ -293,18 +293,16 @@ def getOrdersToBeCancelled():
 def getBuyPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
     buy_price = normalizedEstimatedPrice - market_trend.std
-    logger.debug(
-        "Buy - std price: {}, margin price: {}, 2x margin price: {}".format(toEightDigit(buy_price), toEightDigit(
-            market_trend.avg - priceVariation(market_trend)), toEightDigit(
-            market_trend.avg - 2 * priceVariation(market_trend))))
+    logger.debug("Buy - std price: {}, margin price: {}, margin: {}".format(toEightDigit(buy_price), toEightDigit(
+        market_trend.avg - priceVariation(market_trend)), toEightDigit(market_trend.avg * DESIRED_EARNING)))
     return buy_price
 
 
 def getSellPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
     sell_price = normalizedEstimatedPrice + market_trend.std
-    logger.debug("Sell - std price: {}, margin price: {}".format(toEightDigit(sell_price), toEightDigit(
-        market_trend.avg + priceVariation(market_trend))))
+    logger.debug("Sell - std price: {}, margin price: {}, margin: {}".format(toEightDigit(sell_price), toEightDigit(
+        market_trend.avg + priceVariation(market_trend)), toEightDigit(market_trend.avg * DESIRED_EARNING)))
     return sell_price
 
 
