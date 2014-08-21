@@ -12,11 +12,11 @@ from CryptsyMongo import CryptsyMongo
 
 # create logger
 logger = logging.getLogger("bot_logger")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # create console handler and set level to debug
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 
 # create formatter
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -28,6 +28,7 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 FEE = 0.0025
+DESIRED_EARNING = 0.0025
 BASE_STAKE = 0.0005
 TEST_STAKE = 0.000001
 MINIMUM_AMOUNT_TO_INVEST = 0.000001
@@ -65,7 +66,7 @@ def getMarketTrends(inactiveBtcMarkets, markets):
     recent_market_trends = cryptsy_mongo.getRecentMarketTrends()
 
     for recent_market_trend in recent_market_trends:
-        if recent_market_trend.std < 0:
+        if recent_market_trend.std < 0.0:
             logger.warn(
                 "Non positive standard deviation {} for recent market trend, market {} ".format(recent_market_trend.std,
                                                                                                 recent_market_trend.marketName))
@@ -111,7 +112,7 @@ def investBTC(btcBalance, active_markets, markets):
 
     sorted_market_trend_ids = [x.marketId for x in sorted_market_trends]
 
-    logger.debug("sorted_market_trend_ids: {}".format(sorted_market_trend_ids))
+    logger.info("sorted_market_trend_ids: {}".format(sorted_market_trend_ids))
 
     avg_filtered_market_trends = filter(lambda x: x.m != 0.0 and x.m >= -1 and x.avg >= 0.000001,
                                         sorted_market_trends)
@@ -119,6 +120,20 @@ def investBTC(btcBalance, active_markets, markets):
     avg_filtered_market_trends_ids = [x.marketId for x in avg_filtered_market_trends]
 
     logger.debug("avg_filtered_market_trends_ids: {}".format(avg_filtered_market_trends_ids))
+
+    for trend in avg_filtered_market_trends:
+        logger.debug("{}({}) avg: {}, std: {}, fee: {}, earning: {}, in: {}".format(trend.marketName,
+                                                                                    trend.marketId,
+                                                                                    trend.avg,
+                                                                                    trend.std,
+                                                                                    trend.avg * FEE,
+                                                                                    trend.avg * DESIRED_EARNING,
+                                                                                    trend.std > (
+                                                                                        trend.avg * FEE +
+                                                                                        trend.avg * DESIRED_EARNING)))
+
+    # sorted_market_trends_to_bet_on = filter(lambda x: x.std > (x.avg * FEE + x.avg * DESIRED_EARNING),
+    #                                         avg_filtered_market_trends)
 
     sorted_market_trends_to_bet_on = filter(lambda x: x.std > 2 * (x.avg * FEE), avg_filtered_market_trends)
 
