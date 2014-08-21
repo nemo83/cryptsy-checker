@@ -94,6 +94,10 @@ def getMarketTrends(inactiveBtcMarkets, markets):
     return market_trends, marketIds
 
 
+def priceVariation(trend):
+    return trend.avg * FEE + trend.avg * DESIRED_EARNING
+
+
 def investBTC(btcBalance, active_markets, markets):
     market_names = [market for market in markets]
 
@@ -128,9 +132,7 @@ def investBTC(btcBalance, active_markets, markets):
                                                                                     trend.std,
                                                                                     trend.avg * FEE,
                                                                                     trend.avg * DESIRED_EARNING,
-                                                                                    trend.std > (
-                                                                                        trend.avg * FEE +
-                                                                                        trend.avg * DESIRED_EARNING)))
+                                                                                    trend.std > priceVariation(trend)))
 
     # sorted_market_trends_to_bet_on = filter(lambda x: x.std > (x.avg * FEE + x.avg * DESIRED_EARNING),
     #                                         avg_filtered_market_trends)
@@ -289,12 +291,18 @@ def getOrdersToBeCancelled():
 
 def getBuyPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
-    return normalizedEstimatedPrice - market_trend.std
+    buy_price = normalizedEstimatedPrice - market_trend.std
+    logger.debug("Buy - std price: {}, margin price: {}".format(toEightDigit(buy_price), toEightDigit(
+        market_trend.avg - priceVariation(market_trend))))
+    return buy_price
 
 
 def getSellPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
-    return normalizedEstimatedPrice + market_trend.std
+    sell_price = normalizedEstimatedPrice + market_trend.std
+    logger.debug("Sell - std price: {}, margin price: {}".format(toEightDigit(sell_price), toEightDigit(
+        market_trend.avg + priceVariation(market_trend))))
+    return sell_price
 
 
 def getEstimatedPrice(market_trend):
