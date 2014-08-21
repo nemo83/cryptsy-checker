@@ -293,16 +293,27 @@ def getOrdersToBeCancelled():
 def getBuyPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
     buy_price = normalizedEstimatedPrice - market_trend.std
-    logger.debug("Buy - std price: {}, margin price: {}, margin: {}".format(toEightDigit(buy_price), toEightDigit(
-        market_trend.avg - priceVariation(market_trend)), toEightDigit(market_trend.avg * DESIRED_EARNING)))
+    logger.debug("Buy - {}({}) std price: {}, margin price: {}, margin: {}".format(market_trend.marketName,
+                                                                                   market_trend.marketId,
+                                                                                   toEightDigit(buy_price),
+                                                                                   toEightDigit(
+                                                                                       market_trend.avg - priceVariation(
+                                                                                           market_trend)), toEightDigit(
+            market_trend.avg * DESIRED_EARNING)))
     return buy_price
 
 
 def getSellPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
     sell_price = normalizedEstimatedPrice + market_trend.std
-    logger.debug("Sell - std price: {}, margin price: {}, margin: {}".format(toEightDigit(sell_price), toEightDigit(
-        market_trend.avg + priceVariation(market_trend)), toEightDigit(market_trend.avg * DESIRED_EARNING)))
+    logger.debug("Sell - {}({}) std price: {}, margin price: {}, margin: {}".format(market_trend.marketName,
+                                                                                    market_trend.marketId,
+                                                                                    toEightDigit(sell_price),
+                                                                                    toEightDigit(
+                                                                                        market_trend.avg + priceVariation(
+                                                                                            market_trend)),
+                                                                                    toEightDigit(
+                                                                                        market_trend.avg * DESIRED_EARNING)))
     return sell_price
 
 
