@@ -12,11 +12,11 @@ from CryptsyMongo import CryptsyMongo
 
 # create logger
 logger = logging.getLogger("bot_logger")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # create console handler and set level to debug
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 
 # create formatter
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
