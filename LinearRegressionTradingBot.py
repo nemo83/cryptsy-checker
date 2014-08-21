@@ -131,12 +131,12 @@ def investBTC(btcBalance, active_markets, markets):
 
     logger.debug("best_markets_last_6h: {}".format(best_markets_last_6h))
 
-    worst_markets_last_6h = cryptsy_mongo.getWorstPerformingMarketsFrom(
-        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=6)))
+    worst_markets_last_1h = cryptsy_mongo.getWorstPerformingMarketsFrom(
+        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=1)))
 
-    logger.debug("worst_markets_last_6h: {}".format(worst_markets_last_6h))
+    logger.debug("worst_markets_last_1h: {}".format(worst_markets_last_1h))
 
-    worst_performing_markets = [int(market_id) for market_id in set(worst_markets_last_6h)]
+    worst_performing_markets = [int(market_id) for market_id in set(worst_markets_last_1h)]
 
     logger.info("worst_performing_markets: {}".format(worst_performing_markets))
 
@@ -276,9 +276,9 @@ def getSellPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
     return normalizedEstimatedPrice + market_trend.std
 
+
 def getEstimatedPrice(market_trend):
     return cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
-
 
 
 def placeSellOrder(marketName, marketId, quantity):
