@@ -12,11 +12,11 @@ from CryptsyMongo import CryptsyMongo
 
 # create logger
 logger = logging.getLogger("bot_logger")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # create console handler and set level to debug
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 
 # create formatter
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -177,8 +177,8 @@ def investBTC(btcBalance, active_markets, markets):
         market_multiplier = market_multipliers[
             market_trend.marketId] if market_trend.marketId in market_multipliers else 0
 
-        logger.info(
-            "Buy - {}({}) multiplier: {}".format(market_trend.marketName, market_trend.marketId, market_multiplier))
+        # logger.info(
+        #     "Buy - {}({}) multiplier: {}".format(market_trend.marketName, market_trend.marketId, market_multiplier))
 
         if int(market_trend.marketId) in userMarketIds:
             desiredAmountToInvest = TEST_STAKE
