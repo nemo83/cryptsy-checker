@@ -167,7 +167,7 @@ def investBTC(btcBalance, active_markets, markets):
 
     market_multipliers = cryptsy_mongo.getMarketsMultipliers()
 
-    logger.info("Markets Multiplier: {}".format(market_multipliers))
+    logger.info("Buy - Markets Multiplier: {}".format(market_multipliers))
 
     for market_trend in marketTrendsToInvestOn:
 
@@ -177,7 +177,8 @@ def investBTC(btcBalance, active_markets, markets):
         market_multiplier = market_multipliers[
             market_trend.marketId] if market_trend.marketId in market_multipliers else 0
 
-        logger.info("Market: {} - multiplier: {}".format(market_trend.marketId, market_multiplier))
+        logger.info(
+            "Buy - {}({}) multiplier: {}".format(market_trend.marketName, market_trend.marketId, market_multiplier))
 
         if int(market_trend.marketId) in userMarketIds:
             desiredAmountToInvest = TEST_STAKE
@@ -196,8 +197,10 @@ def investBTC(btcBalance, active_markets, markets):
 
         if three_hours_trend.m == 0.0 or three_hours_trend.m < -0.1 or three_hours_trend.num_samples < 25:
             logger.info(
-                "Market {} has m: {} and number samples: {}".format(three_hours_trend.marketName, three_hours_trend.m,
-                                                                    three_hours_trend.num_samples))
+                "Buy - {}({}) has m: {} and number samples: {}".format(three_hours_trend.marketName,
+                                                                       three_hours_trend.marketId,
+                                                                       three_hours_trend.m,
+                                                                       three_hours_trend.num_samples))
             continue
 
         one_hour_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 1)
@@ -206,10 +209,12 @@ def investBTC(btcBalance, active_markets, markets):
 
         if three_hours_trend.m > two_hours_trend.m > one_hour_trend.m < 0.1:
             logger.info(
-                "Market {} has 3h m: {} 2h m: {} 1h m: {}".format(three_hours_trend.marketName,
-                                                                  three_hours_trend.m,
-                                                                  two_hours_trend.m,
-                                                                  one_hour_trend.m))
+                "Buy - {}({}) has 3h m: {} 2h m: {} 1h m: {}".format(three_hours_trend.marketName,
+                                                                     three_hours_trend.marketId,
+                                                                     three_hours_trend.m,
+                                                                     two_hours_trend.m,
+                                                                     one_hour_trend.m))
+            continue
 
         buyPrice = getBuyPrice(three_hours_trend)
 
