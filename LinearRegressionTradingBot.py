@@ -225,7 +225,7 @@ def investBTC(btcBalance, active_markets, markets):
 
         two_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 2)
 
-        if three_hours_trend.m > two_hours_trend.m > one_hour_trend.m < 0.1:
+        if three_hours_trend.m > two_hours_trend.m > one_hour_trend.m < -0.1:
             logger.info(
                 "Buy - {}({}) has 3h m: {} 2h m: {} 1h m: {}".format(three_hours_trend.marketName,
                                                                      three_hours_trend.marketId,
@@ -332,7 +332,7 @@ def placeSellOrder(marketName, marketId, quantity):
                                                                     toEightDigit(one_hour_trend.m)))
 
     quick_sale = False
-    if three_hours_trend.m > two_hours_trend.m > one_hour_trend.m < 0.1:
+    if three_hours_trend.m > two_hours_trend.m > one_hour_trend.m < -0.1:
         logger.info("Quick sale feature triggered!")
         quick_sale = True
         if one_hour_trend.m is not 0.0:
