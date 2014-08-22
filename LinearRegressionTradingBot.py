@@ -142,7 +142,7 @@ def investBTC(btcBalance, active_markets, markets):
 
     sorted_market_trends_to_bet_on_ids = [x.marketId for x in sorted_market_trends_to_bet_on]
 
-    logger.debug("sorted_market_trends_to_bet_on_ids: {}".format(sorted_market_trends_to_bet_on_ids))
+    logger.info("sorted_market_trends_to_bet_on_ids: {}".format(sorted_market_trends_to_bet_on_ids))
 
     best_markets_last_6h = cryptsy_mongo.getBestPerformingMarketsFrom(
         toCryptsyServerTime(datetime.utcnow() - timedelta(hours=6)))
