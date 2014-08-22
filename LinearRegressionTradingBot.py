@@ -144,21 +144,21 @@ def investBTC(btcBalance, active_markets, markets):
 
     logger.info("sorted_market_trends_to_bet_on_ids: {}".format(sorted_market_trends_to_bet_on_ids))
 
-    best_markets_last_6h = cryptsy_mongo.getBestPerformingMarketsFrom(
-        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=6)))
+    best_markets_last_3h = cryptsy_mongo.getBestPerformingMarketsFrom(
+        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=3)))
 
-    logger.debug("best_markets_last_6h: {}".format(best_markets_last_6h))
+    logger.debug("best_markets_last_3h: {}".format(best_markets_last_3h))
 
-    worst_markets_last_1h = cryptsy_mongo.getWorstPerformingMarketsFrom(
-        toCryptsyServerTime(datetime.utcnow() - timedelta(hours=1)))
+    worst_markets_last_30m = cryptsy_mongo.getWorstPerformingMarketsFrom(
+        toCryptsyServerTime(datetime.utcnow() - timedelta(minutes=30)))
 
-    logger.debug("worst_markets_last_1h: {}".format(worst_markets_last_1h))
+    logger.debug("worst_markets_last_30m: {}".format(worst_markets_last_30m))
 
-    worst_performing_markets = [int(market_id) for market_id in set(worst_markets_last_1h)]
+    worst_performing_markets = [int(market_id) for market_id in set(worst_markets_last_30m)]
 
     logger.info("worst_performing_markets: {}".format(worst_performing_markets))
 
-    best_performing_markets = [int(market) for market in best_markets_last_6h if
+    best_performing_markets = [int(market) for market in best_markets_last_3h if
                                int(market) not in worst_performing_markets]
 
     logger.info("best_performing_markets: {}".format(best_performing_markets))
@@ -216,9 +216,9 @@ def investBTC(btcBalance, active_markets, markets):
         if one_hour_trend.m == 0.0 or one_hour_trend.m < 0.1 or one_hour_trend.num_samples < 25:
             logger.info(
                 "Buy - REJECTED - {}({}) has m: {} and number samples: {}".format(one_hour_trend.marketName,
-                                                                       one_hour_trend.marketId,
-                                                                       one_hour_trend.m,
-                                                                       one_hour_trend.num_samples))
+                                                                                  one_hour_trend.marketId,
+                                                                                  one_hour_trend.m,
+                                                                                  one_hour_trend.num_samples))
             continue
 
         buyPrice = getBuyPrice(one_hour_trend)
