@@ -208,7 +208,7 @@ def investBTC(btcBalance, active_markets, markets):
         elif market_multiplier == 0:
             desiredAmountToInvest = TEST_STAKE
         elif market_multiplier < 0:
-            continue
+            desiredAmountToInvest = TEST_STAKE
         else:
             desiredAmountToInvest = TEST_STAKE
 
