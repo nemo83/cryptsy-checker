@@ -135,10 +135,10 @@ def investBTC(btcBalance, active_markets, markets):
                                                                                         trend.avg * DESIRED_EARNING),
                                                                                     trend.std > priceVariation(trend)))
 
-    sorted_market_trends_to_bet_on = filter(lambda x: x.std > (x.avg * FEE + x.avg * DESIRED_EARNING),
-                                            avg_filtered_market_trends)
+    # sorted_market_trends_to_bet_on = filter(lambda x: x.std > (x.avg * FEE + x.avg * DESIRED_EARNING),
+    #                                         avg_filtered_market_trends)
 
-    # sorted_market_trends_to_bet_on = filter(lambda x: x.std > 2 * (x.avg * FEE), avg_filtered_market_trends)
+    sorted_market_trends_to_bet_on = filter(lambda x: x.std > 2 * (x.avg * FEE), avg_filtered_market_trends)
 
     sorted_market_trends_to_bet_on_ids = [x.marketId for x in sorted_market_trends_to_bet_on]
 
