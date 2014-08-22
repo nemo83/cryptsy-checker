@@ -231,6 +231,12 @@ def investBTC(btcBalance, active_markets, markets):
                                                                                                     buyPrice))
             continue
 
+        logger.info(
+            "Buy - PLACING - {}({}) has m: {} and number samples: {}".format(one_hour_trend.marketName,
+                                                                             one_hour_trend.marketId,
+                                                                             one_hour_trend.m,
+                                                                             one_hour_trend.num_samples))
+
         responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(market_trend.marketId, quantity, buyPrice)
         if apiCallSucceded:
             btcBalance -= amountToInvest
