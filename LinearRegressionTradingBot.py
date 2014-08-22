@@ -213,7 +213,7 @@ def investBTC(btcBalance, active_markets, markets):
 
         one_hour_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 1)
 
-        if one_hour_trend.m == 0.0 or one_hour_trend.m < 0.1 or one_hour_trend.num_samples < 25:
+        if one_hour_trend.m == 0.0 or one_hour_trend.m < 0.1 or one_hour_trend.num_samples < 10:
             logger.info(
                 "Buy - REJECTED - {}({}) has m: {} and number samples: {}".format(one_hour_trend.marketName,
                                                                                   one_hour_trend.marketId,
@@ -379,9 +379,9 @@ def main(argv):
     cancelOrders(ordersToBeCancelled)
 
     balanceList = filter(lambda x: x[0] != 'Points', cryptsyClient.getInfo())
-    logger.info("Current Balance:")
-    for balance in balanceList:
-        logger.info("{}, {}".format(balance[0], balance[1]))
+    # logger.info("Current Balance:")
+    # for balance in balanceList:
+    #     logger.info("{}, {}".format(balance[0], balance[1]))
 
     btcBalance = 0.0
     sell_order_placed = False
