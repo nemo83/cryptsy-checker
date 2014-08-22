@@ -11,6 +11,7 @@ from CryptsyPy import CryptsyPy, fromCryptsyServerTime, toCryptsyServerTime, CRY
 from CryptsyMongo import CryptsyMongo
 
 
+
 # create logger
 logger = logging.getLogger("bot_logger")
 logger.setLevel(logging.INFO)
@@ -96,7 +97,7 @@ def getMarketTrends(inactiveBtcMarkets, markets):
 
 
 def priceVariation(trend):
-    return trend.avg * FEE + trend.avg * DESIRED_EARNING
+    return 2 * trend.avg * FEE + trend.avg * DESIRED_EARNING
 
 
 def investBTC(btcBalance, active_markets, markets):
@@ -198,7 +199,7 @@ def investBTC(btcBalance, active_markets, markets):
             market_trend.marketId] if market_trend.marketId in market_multipliers else 0
 
         # logger.info(
-        #     "Buy - {}({}) multiplier: {}".format(market_trend.marketName, market_trend.marketId, market_multiplier))
+        # "Buy - {}({}) multiplier: {}".format(market_trend.marketName, market_trend.marketId, market_multiplier))
 
         if int(market_trend.marketId) in userMarketIds:
             desiredAmountToInvest = TEST_STAKE
@@ -287,7 +288,7 @@ def getOrdersToBeCancelled():
 
 def getBuyPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
-    buy_price = normalizedEstimatedPrice - 2 * market_trend.std
+    buy_price = normalizedEstimatedPrice - market_trend.std
     buy_variation = market_trend.avg - priceVariation(market_trend)
     logger.debug("Buy - {}({}) std price: {}, margin price: {}, margin: {}".format(market_trend.marketName,
                                                                                    market_trend.marketId,
@@ -303,7 +304,7 @@ def getSellPrice(market_trend):
     # sell_price = normalizedEstimatedPrice + market_trend.std
     # sell_variation = market_trend.avg + priceVariation(market_trend)
     # logger.debug("Sell - {}({}) std price: {}, margin price: {}, margin: {}".format(market_trend.marketName,
-    #                                                                                 market_trend.marketId,
+    # market_trend.marketId,
     #                                                                                 toEightDigit(sell_price),
     #                                                                                 toEightDigit(
     #                                                                                     sell_variation),
