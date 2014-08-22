@@ -211,30 +211,17 @@ def investBTC(btcBalance, active_markets, markets):
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
-        three_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 3)
-
-        if three_hours_trend.m == 0.0 or three_hours_trend.m < -0.1 or three_hours_trend.num_samples < 25:
-            logger.info(
-                "Buy - {}({}) has m: {} and number samples: {}".format(three_hours_trend.marketName,
-                                                                       three_hours_trend.marketId,
-                                                                       three_hours_trend.m,
-                                                                       three_hours_trend.num_samples))
-            continue
-
         one_hour_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 1)
 
-        two_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 2)
-
-        if three_hours_trend.m > two_hours_trend.m > one_hour_trend.m < -0.1:
+        if one_hour_trend.m == 0.0 or one_hour_trend.m < 0.1 or one_hour_trend.num_samples < 25:
             logger.info(
-                "Buy - {}({}) has 3h m: {} 2h m: {} 1h m: {}".format(three_hours_trend.marketName,
-                                                                     three_hours_trend.marketId,
-                                                                     three_hours_trend.m,
-                                                                     two_hours_trend.m,
-                                                                     one_hour_trend.m))
+                "Buy - {}({}) has m: {} and number samples: {}".format(one_hour_trend.marketName,
+                                                                       one_hour_trend.marketId,
+                                                                       one_hour_trend.m,
+                                                                       one_hour_trend.num_samples))
             continue
 
-        buyPrice = getBuyPrice(three_hours_trend)
+        buyPrice = getBuyPrice(one_hour_trend)
 
         quantity = calculateQuantity(amountToInvest, FEE, buyPrice)
 
@@ -331,19 +318,10 @@ def placeSellOrder(marketName, marketId, quantity):
                                                                     toEightDigit(two_hours_trend.m),
                                                                     toEightDigit(one_hour_trend.m)))
 
-    quick_sale = False
-    if three_hours_trend.m > two_hours_trend.m > one_hour_trend.m < -0.1:
-        logger.info("Quick sale feature triggered!")
-        quick_sale = True
-        if one_hour_trend.m is not 0.0:
-            logger.info("Using 1h trend")
-            sell_trend = one_hour_trend
-        elif two_hours_trend.m is not 0.0:
-            logger.info("Using 2h trend")
-            sell_trend = two_hours_trend
-        else:
-            logger.info("Using 3h trend")
-            sell_trend = three_hours_trend
+    if one_hour_trend.m is not 0.0:
+        sell_trend = one_hour_trend
+    elif two_hours_trend.m is not 0.0:
+        sell_trend = two_hours_trend
     else:
         sell_trend = three_hours_trend
 
@@ -354,7 +332,7 @@ def placeSellOrder(marketName, marketId, quantity):
         logger.info("No sell order for market {} will be placed. Not enough sale info.".format(marketName))
         return
 
-    if quick_sale:
+    if sell_trend.m < -0.5:
         sell_price = getEstimatedPrice(sell_trend)
     else:
         sell_price = getSellPrice(sell_trend)
