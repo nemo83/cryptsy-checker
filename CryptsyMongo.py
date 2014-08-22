@@ -224,10 +224,8 @@ class CryptsyMongo:
                 elif activity[0] == "Buy" and sales_in_transaction_detected:
                     if income > 0:
                         multiplier_counter += 1
-                        last_transaction_negative = False
                     else:
-                        multiplier_counter -= 1
-                        last_transaction_negative = True
+                        multiplier_counter = -1
                     income = 0
                     sales_in_transaction_detected = False
                 else:
@@ -237,10 +235,8 @@ class CryptsyMongo:
             if sales_in_transaction_detected:
                 if income > 0:
                     multiplier_counter += 1
-                    last_transaction_negative = False
                 else:
-                    multiplier_counter -= 1
-                    last_transaction_negative = True
+                    multiplier_counter = -1
 
             multipliers[int(market_id)] = {}
             # multipliers[int(market_id)] = multiplier_counter if not last_transaction_negative else 0
