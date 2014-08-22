@@ -88,7 +88,7 @@ class CryptsyMongo:
         normalizedPrices, minPrice, priceScalingFactor = normalizeValues(prices)
 
         if priceScalingFactor == 0.0 or timeScalingFactor == 0.0:
-            logger.info("priceScalingFactor: {}, timeScalingFactor: {}".format(priceScalingFactor, timeScalingFactor))
+            # logger.info("priceScalingFactor: {}, timeScalingFactor: {}".format(priceScalingFactor, timeScalingFactor))
             return MarketTrend(market_name, market_id)
 
         trend = numpy.polyfit(normalizedTimes, normalizedPrices, 1)
