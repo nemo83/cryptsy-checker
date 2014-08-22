@@ -359,7 +359,7 @@ def placeSellOrder(marketName, marketId, quantity):
     else:
         sell_price = getSellPrice(sell_trend)
 
-    if quantity * sell_price >= 0.00000010:
+    if quantity * sell_price > 0.00000010:
         cryptsyClient.placeSellOrder(sell_trend.marketId, quantity, sell_price)
     else:
         logger.info("Order is less than 0.00000010: {}".format(quantity * sell_price))
