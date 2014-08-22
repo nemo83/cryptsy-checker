@@ -243,7 +243,8 @@ class CryptsyMongo:
                     last_transaction_negative = True
 
             multipliers[int(market_id)] = {}
-            multipliers[int(market_id)] = multiplier_counter if not last_transaction_negative else 0
+            # multipliers[int(market_id)] = multiplier_counter if not last_transaction_negative else 0
+            multipliers[int(market_id)] = multiplier_counter
 
         return multipliers
 
