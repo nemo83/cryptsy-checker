@@ -135,10 +135,10 @@ def investBTC(btcBalance, active_markets, markets):
                                                                                         trend.avg * DESIRED_EARNING),
                                                                                     trend.std > priceVariation(trend)))
 
-    # sorted_market_trends_to_bet_on = filter(lambda x: x.std > (x.avg * FEE + x.avg * DESIRED_EARNING),
-    #                                         avg_filtered_market_trends)
+    sorted_market_trends_to_bet_on = filter(lambda x: x.std > (x.avg * FEE + x.avg * DESIRED_EARNING),
+                                            avg_filtered_market_trends)
 
-    sorted_market_trends_to_bet_on = filter(lambda x: x.std > 2 * (x.avg * FEE), avg_filtered_market_trends)
+    # sorted_market_trends_to_bet_on = filter(lambda x: x.std > 2 * (x.avg * FEE), avg_filtered_market_trends)
 
     sorted_market_trends_to_bet_on_ids = [x.marketId for x in sorted_market_trends_to_bet_on]
 
@@ -293,28 +293,28 @@ def getOrdersToBeCancelled():
 def getBuyPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
     buy_price = normalizedEstimatedPrice - market_trend.std
+    buy_variation = market_trend.avg - priceVariation(market_trend)
     logger.debug("Buy - {}({}) std price: {}, margin price: {}, margin: {}".format(market_trend.marketName,
                                                                                    market_trend.marketId,
                                                                                    toEightDigit(buy_price),
+                                                                                   toEightDigit(buy_variation),
                                                                                    toEightDigit(
-                                                                                       market_trend.avg - priceVariation(
-                                                                                           market_trend)), toEightDigit(
-            market_trend.avg * DESIRED_EARNING)))
-    return buy_price
+                                                                                       market_trend.avg * DESIRED_EARNING)))
+    return max(buy_price, buy_variation)
 
 
 def getSellPrice(market_trend):
     normalizedEstimatedPrice = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
     sell_price = normalizedEstimatedPrice + market_trend.std
+    sell_variation = market_trend.avg + priceVariation(market_trend)
     logger.debug("Sell - {}({}) std price: {}, margin price: {}, margin: {}".format(market_trend.marketName,
                                                                                     market_trend.marketId,
                                                                                     toEightDigit(sell_price),
                                                                                     toEightDigit(
-                                                                                        market_trend.avg + priceVariation(
-                                                                                            market_trend)),
+                                                                                        sell_variation),
                                                                                     toEightDigit(
                                                                                         market_trend.avg * DESIRED_EARNING)))
-    return sell_price
+    return min(sell_price, sell_variation)
 
 
 def getEstimatedPrice(market_trend):
