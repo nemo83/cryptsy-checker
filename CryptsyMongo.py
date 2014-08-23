@@ -141,7 +141,7 @@ class CryptsyMongo:
             'tradeid', 1)
 
     def getLastTradeFor(self, market_id, trade_type):
-        return self.trades_collection.trades_collection.find(
+        return self.trades_collection.find(
             {"marketid": str(market_id), "tradetype": trade_type}).sort('tradeid', -1).limit(1)
 
     def getAllTradesFrom(self, time_start):

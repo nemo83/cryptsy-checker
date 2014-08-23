@@ -23,6 +23,8 @@ from CryptsyMongo import CryptsyMongo
 
 
 
+
+
 # create logger
 logger = logging.getLogger("bot_logger")
 logger.setLevel(logging.INFO)
@@ -317,8 +319,6 @@ def getSellPrice(market_trend):
     actual_estimated_price = cryptsy_mongo.getNormalizedEstimatedPrice(market_trend)
 
     if market_trend.m > 0.5:
-        logger.info("Sell - getSellPrice - {}({}) - GROWING_TREND".format(market_trend.marketName,
-                                                                                          market_trend.marketId))
         last_buy_trade = next(cryptsy_mongo.getLastTradeFor(market_id=market_trend.marketId, trade_type="Buy"))
         trade_price = float(last_buy_trade['tradeprice'])
         sell_price = trade_price + priceVariation(trade_price, percent_value=0.25)
