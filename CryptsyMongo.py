@@ -4,6 +4,7 @@ import logging
 import numpy
 from pymongo import MongoClient
 
+
 logger = logging.getLogger("bot_logger")
 
 epoch = datetime.utcfromtimestamp(0)
@@ -139,6 +140,9 @@ class CryptsyMongo:
         return self.trades_collection.find({"datetime": {"$gt": time_start.strftime("%Y-%m-%d %H:%M:%S")}}).sort(
             'tradeid', 1)
 
+    def getLastTradeFor(self, market_id, trade_type):
+        return self.trades_collection.trades_collection.find(
+            {"marketid": str(market_id), "tradetype": trade_type}).sort('tradeid', -1).limit(1)
 
     def getAllTradesFrom(self, time_start):
 
