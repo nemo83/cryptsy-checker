@@ -293,7 +293,7 @@ def getBuyPrice(market_trend):
     std_buy_price = actual_estimated_price - market_trend.std
 
     if market_trend.m > 0.5:
-        buy_price = actual_estimated_price - priceVariation(actual_estimated_price, fee_multiplier=1)
+        buy_price = actual_estimated_price - priceVariation(actual_estimated_price)
         logger.info("Buy - getBuyPrice - {}({}) - GROWING_TREND - buy_price: {}".format(market_trend.marketName,
                                                                                         market_trend.marketId,
                                                                                         toEightDigit(buy_price)))
@@ -321,18 +321,18 @@ def getSellPrice(market_trend):
     if market_trend.m > 0.5:
         last_buy_trade = next(cryptsy_mongo.getLastTradeFor(market_id=market_trend.marketId, trade_type="Buy"))
         trade_price = float(last_buy_trade['tradeprice'])
-        sell_price = trade_price + priceVariation(trade_price, percent_value=0.25)
-        logger.info("Sell - getSellPrice - {}({}) - GROWING_TREND - buy_price: {}".format(market_trend.marketName,
+        sell_price = trade_price + priceVariation(trade_price, percent_value=0.5)
+        logger.info("Sell - getSellPrice - {}({}) - GROWING_TREND - sell_price: {}".format(market_trend.marketName,
                                                                                           market_trend.marketId,
                                                                                           toEightDigit(sell_price)))
     elif market_trend > -0.1:
         sell_price = actual_estimated_price
-        logger.info("Sell - getSellPrice - {}({}) - CONSTANT_TREND - buy_price: {}".format(market_trend.marketName,
+        logger.info("Sell - getSellPrice - {}({}) - CONSTANT_TREND - sell_price: {}".format(market_trend.marketName,
                                                                                            market_trend.marketId,
                                                                                            toEightDigit(sell_price)))
     else:
         sell_price = actual_estimated_price
-        logger.info("Sell - getSellPrice - {}({}) - DECREASING_TREND - buy_price: {}".format(market_trend.marketName,
+        logger.info("Sell - getSellPrice - {}({}) - DECREASING_TREND - sell_price: {}".format(market_trend.marketName,
                                                                                              market_trend.marketId,
                                                                                              toEightDigit(sell_price)))
 
