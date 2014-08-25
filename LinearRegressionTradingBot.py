@@ -226,6 +226,16 @@ def investBTC(btcBalance, active_markets, markets):
                                                                                   one_hour_trend.num_samples))
             continue
 
+        two_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 2)
+
+        if two_hours_trend.m > one_hour_trend.m < 0.3:
+            logger.info(
+                "Buy - REJECTED - {}({}) has m: {} and number samples: {}".format(one_hour_trend.marketName,
+                                                                                  one_hour_trend.marketId,
+                                                                                  one_hour_trend.m,
+                                                                                  one_hour_trend.num_samples))
+            continue
+
         buyPrice = getBuyPrice(one_hour_trend)
 
         quantity = calculateQuantity(amountToInvest, FEE, buyPrice)
