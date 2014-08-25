@@ -218,7 +218,7 @@ def investBTC(btcBalance, active_markets, markets):
 
         one_hour_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 1)
 
-        if one_hour_trend.m == 0.0 or one_hour_trend.m < -0.5 or one_hour_trend.num_samples < 10:
+        if one_hour_trend.m == 0.0 or one_hour_trend.m < -2 or one_hour_trend.num_samples < 10:
             logger.info(
                 "Buy - REJECTED - {}({}) has m: {} and number samples: {}".format(one_hour_trend.marketName,
                                                                                   one_hour_trend.marketId,
@@ -306,7 +306,7 @@ def getBuyPrice(market_trend):
                                                                                          toEightDigit(buy_price)))
     else:
         variation_buy_price = actual_estimated_price - priceVariation(actual_estimated_price, fee_multiplier=2,
-                                                                      percent_value=1.5)
+                                                                      percent_value=max(1.5, abs(market_trend.m)))
         buy_price = min(std_buy_price, variation_buy_price)
         logger.info("Buy - getBuyPrice - {}({}) - DECREASING_TREND - buy_price: {}".format(market_trend.marketName,
                                                                                            market_trend.marketId,
@@ -323,18 +323,18 @@ def getSellPrice(market_trend):
         trade_price = float(last_buy_trade['tradeprice'])
         sell_price = trade_price + priceVariation(trade_price, percent_value=0.5)
         logger.info("Sell - getSellPrice - {}({}) - GROWING_TREND - sell_price: {}".format(market_trend.marketName,
-                                                                                          market_trend.marketId,
-                                                                                          toEightDigit(sell_price)))
+                                                                                           market_trend.marketId,
+                                                                                           toEightDigit(sell_price)))
     elif market_trend > -0.1:
         sell_price = actual_estimated_price
         logger.info("Sell - getSellPrice - {}({}) - CONSTANT_TREND - sell_price: {}".format(market_trend.marketName,
-                                                                                           market_trend.marketId,
-                                                                                           toEightDigit(sell_price)))
+                                                                                            market_trend.marketId,
+                                                                                            toEightDigit(sell_price)))
     else:
         sell_price = actual_estimated_price
         logger.info("Sell - getSellPrice - {}({}) - DECREASING_TREND - sell_price: {}".format(market_trend.marketName,
-                                                                                             market_trend.marketId,
-                                                                                             toEightDigit(sell_price)))
+                                                                                              market_trend.marketId,
+                                                                                              toEightDigit(sell_price)))
 
     return sell_price
 
