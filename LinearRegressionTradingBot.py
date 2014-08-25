@@ -132,7 +132,7 @@ def investBTC(btcBalance, active_markets, markets):
 
     logger.info("sorted_market_trend_ids: {}".format(sorted_market_trend_ids))
 
-    avg_filtered_market_trends = filter(lambda x: x.m != 0.0 and x.m >= -1 and x.avg >= 0.000001,
+    avg_filtered_market_trends = filter(lambda x: x.m != 0.0 and x.m >= 0.1 and x.avg >= 0.000001,
                                         sorted_market_trends)
 
     avg_filtered_market_trends_ids = [x.marketId for x in avg_filtered_market_trends]
