@@ -218,39 +218,42 @@ def investBTC(btcBalance, active_markets, markets):
 
         one_hour_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 1)
 
-        if one_hour_trend.m == 0.0 or one_hour_trend.m < 0.1 or one_hour_trend.num_samples < 10:
-            logger.info(
-                "Buy - REJECTED - {}({}) has m: {} and number samples: {}".format(one_hour_trend.marketName,
-                                                                                  one_hour_trend.marketId,
-                                                                                  one_hour_trend.m,
-                                                                                  one_hour_trend.num_samples))
-            continue
-
         two_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 2)
 
-        if two_hours_trend.m > one_hour_trend.m < 0.3:
+        three_hours_trend = getMarketTrendFor(market_trend.marketName, market_trend.marketId, 3)
+
+        if three_hours_trend.m == 0.0 or three_hours_trend.m < 0.0 or three_hours_trend.num_samples < 25:
             logger.info(
-                "Buy - REJECTED - {}({}) has m: {} and number samples: {}".format(one_hour_trend.marketName,
-                                                                                  one_hour_trend.marketId,
-                                                                                  one_hour_trend.m,
-                                                                                  one_hour_trend.num_samples))
+                "Buy - REJECTED - {}({}) has m: {} and number samples: {}".format(three_hours_trend.marketName,
+                                                                                  three_hours_trend.marketId,
+                                                                                  three_hours_trend.m,
+                                                                                  three_hours_trend.num_samples))
+            continue
+        elif two_hours_trend.m > one_hour_trend.m < 0.3:
+            logger.info(
+                "Buy - REJECTED - {}({}) has 3h-2h-1h: {}, {}, {} ".format(three_hours_trend.marketName,
+                                                                           three_hours_trend.marketId,
+                                                                           three_hours_trend.m,
+                                                                           two_hours_trend.m,
+                                                                           one_hour_trend.m))
             continue
 
-        buyPrice = getBuyPrice(one_hour_trend)
+        buyPrice = getBuyPrice(three_hours_trend)
 
         quantity = calculateQuantity(amountToInvest, FEE, buyPrice)
 
         if buyPrice <= 0.0 or quantity <= 0.0:
-            logger.info("Attempting to buy: {} {}, at price: {} - Order will not be placed.".format(quantity,
-                                                                                                    market_trend.marketName,
-                                                                                                    buyPrice))
+            logger.info(
+                "Buy - REJECTED - {}({}) quantity: {} price: {}.".format(market_trend.marketName, market_trend.marketId,
+                                                                         quantity,
+                                                                         buyPrice))
             continue
 
         logger.info(
-            "Buy - PLACING - {}({}) has m: {} and number samples: {}".format(one_hour_trend.marketName,
-                                                                             one_hour_trend.marketId,
-                                                                             one_hour_trend.m,
-                                                                             one_hour_trend.num_samples))
+            "Buy - PLACING - {}({}) quantity: {}, price: {}".format(three_hours_trend.marketName,
+                                                                    three_hours_trend.marketId,
+                                                                    quantity,
+                                                                    buyPrice))
 
         responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(market_trend.marketId, quantity, buyPrice)
         if apiCallSucceded:
@@ -335,11 +338,13 @@ def getSellPrice(market_trend):
         logger.info("Sell - getSellPrice - {}({}) - GROWING_TREND - sell_price: {}".format(market_trend.marketName,
                                                                                            market_trend.marketId,
                                                                                            toEightDigit(sell_price)))
-    elif market_trend > -0.1:
-        sell_price = actual_estimated_price
-        logger.info("Sell - getSellPrice - {}({}) - CONSTANT_TREND - sell_price: {}".format(market_trend.marketName,
-                                                                                            market_trend.marketId,
-                                                                                            toEightDigit(sell_price)))
+    elif market_trend > 0.0:
+        last_buy_trade = next(cryptsy_mongo.getLastTradeFor(market_id=market_trend.marketId, trade_type="Buy"))
+        trade_price = float(last_buy_trade['tradeprice'])
+        sell_price = trade_price + priceVariation(trade_price, percent_value=0.25)
+        logger.info("Sell - getSellPrice - {}({}) - GROWING_TREND - sell_price: {}".format(market_trend.marketName,
+                                                                                           market_trend.marketId,
+                                                                                           toEightDigit(sell_price)))
     else:
         sell_price = actual_estimated_price
         logger.info("Sell - getSellPrice - {}({}) - DECREASING_TREND - sell_price: {}".format(market_trend.marketName,
@@ -355,35 +360,11 @@ def getEstimatedPrice(market_trend):
 
 def placeSellOrder(marketName, marketId, quantity):
     three_hours_trend = getMarketTrendFor(marketName, marketId, 3)
-    two_hours_trend = getMarketTrendFor(marketName, marketId, 2)
-    one_hour_trend = getMarketTrendFor(marketName, marketId, 1)
 
-    logger.info("Sell - {}({}) 3h m: {}, 2h m: {}, 1h m: {}".format(marketName, marketId,
-                                                                    toEightDigit(three_hours_trend.m),
-                                                                    toEightDigit(two_hours_trend.m),
-                                                                    toEightDigit(one_hour_trend.m)))
-
-    if one_hour_trend.m is not 0.0:
-        sell_trend = one_hour_trend
-    elif two_hours_trend.m is not 0.0:
-        sell_trend = two_hours_trend
-    else:
-        sell_trend = three_hours_trend
-
-    if sell_trend.m == 0.0:
-        sell_trend = getMarketTrendFor(marketName, marketId, 12)
-
-    if sell_trend.m == 0.0:
-        logger.info("No sell order for market {} will be placed. Not enough sale info.".format(marketName))
-        return
-
-    if sell_trend.m < -0.5:
-        sell_price = getEstimatedPrice(sell_trend)
-    else:
-        sell_price = getSellPrice(sell_trend)
+    sell_price = getSellPrice(three_hours_trend)
 
     if quantity * sell_price > 0.0000001025:
-        cryptsyClient.placeSellOrder(sell_trend.marketId, quantity, sell_price)
+        cryptsyClient.placeSellOrder(three_hours_trend.marketId, quantity, sell_price)
     else:
         logger.info("Order is less than 0.00000010: {}".format(quantity * sell_price))
 
