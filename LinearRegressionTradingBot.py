@@ -246,14 +246,14 @@ def investBTC(btcBalance, active_markets, markets):
             logger.info(
                 "Buy - REJECTED - {}({}) quantity: {} price: {}.".format(market_trend.marketName, market_trend.marketId,
                                                                          quantity,
-                                                                         buyPrice))
+                                                                         toEightDigit(buyPrice)))
             continue
 
         logger.info(
             "Buy - PLACING - {}({}) quantity: {}, price: {}".format(three_hours_trend.marketName,
                                                                     three_hours_trend.marketId,
                                                                     quantity,
-                                                                    buyPrice))
+                                                                    toEightDigit(buyPrice)))
 
         responseBody, apiCallSucceded = cryptsyClient.placeBuyOrder(market_trend.marketId, quantity, buyPrice)
         if apiCallSucceded:
