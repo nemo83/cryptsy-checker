@@ -361,6 +361,15 @@ def getEstimatedPrice(market_trend):
 def placeSellOrder(marketName, marketId, quantity):
     three_hours_trend = getMarketTrendFor(marketName, marketId, 3)
 
+    sell_trend = three_hours_trend
+
+    if sell_trend.m == 0.0:
+        sell_trend = getMarketTrendFor(marketName, marketId, 12)
+
+    if sell_trend.m == 0.0:
+        logger.info("No sell order for market {} will be placed. Not enough sale info.".format(marketName))
+        return
+
     sell_price = getSellPrice(three_hours_trend)
 
     if quantity * sell_price > 0.0000001025:
