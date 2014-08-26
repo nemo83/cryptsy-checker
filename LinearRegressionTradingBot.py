@@ -370,7 +370,7 @@ def placeSellOrder(marketName, marketId, quantity):
         logger.info("No sell order for market {} will be placed. Not enough sale info.".format(marketName))
         return
 
-    sell_price = getSellPrice(three_hours_trend)
+    sell_price = getSellPrice(sell_trend)
 
     if quantity * sell_price > 0.0000001025:
         cryptsyClient.placeSellOrder(three_hours_trend.marketId, quantity, sell_price)
