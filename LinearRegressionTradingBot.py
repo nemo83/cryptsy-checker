@@ -334,15 +334,15 @@ def getSellPrice(market_trend):
     if market_trend.m > 0.5:
         last_buy_trade = next(cryptsy_mongo.getLastTradeFor(market_id=market_trend.marketId, trade_type="Buy"))
         trade_price = float(last_buy_trade['tradeprice'])
-        sell_price = trade_price + priceVariation(trade_price, percent_value=0.5)
+        sell_price = trade_price + priceVariation(price=trade_price, fee_multiplier=2, percent_value=1)
         logger.info("Sell - getSellPrice - {}({}) - GROWING_TREND - sell_price: {}".format(market_trend.marketName,
                                                                                            market_trend.marketId,
                                                                                            toEightDigit(sell_price)))
     elif market_trend > 0.0:
         last_buy_trade = next(cryptsy_mongo.getLastTradeFor(market_id=market_trend.marketId, trade_type="Buy"))
         trade_price = float(last_buy_trade['tradeprice'])
-        sell_price = trade_price + priceVariation(trade_price, percent_value=0.25)
-        logger.info("Sell - getSellPrice - {}({}) - GROWING_TREND - sell_price: {}".format(market_trend.marketName,
+        sell_price = trade_price + priceVariation(price=trade_price, fee_multiplier=4, percent_value=0.25)
+        logger.info("Sell - getSellPrice - {}({}) - CONSTANT_TREND - sell_price: {}".format(market_trend.marketName,
                                                                                            market_trend.marketId,
                                                                                            toEightDigit(sell_price)))
     else:
