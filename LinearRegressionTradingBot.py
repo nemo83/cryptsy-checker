@@ -128,6 +128,10 @@ def investBTC(btcBalance, activeMarkets, markets):
 
         buyPrice = getBuyPrice(buy_market_trend)
 
+        if buyPrice == 0.0:
+            print "Buy - {}({}) - Price cannot be ZERO".format(marketTrend.marketName, marketTrend.marketId)
+            continue
+
         quantity = calculateQuantity(amountToInvest, FEE, buyPrice)
 
         if buyPrice <= 0.0 or quantity <= 0.0:
