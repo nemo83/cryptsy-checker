@@ -204,16 +204,24 @@ def getOrdersToBeCancelled(markets):
 
             market_trend = getMarketTrendFor(market_name, openOrder[0], 6)
 
-            sellPrice = toEightDigit(getSellPrice(market_trend))
-
-            if float(sellPrice) != float(openOrder[4]):
-                logger.info(
-                    "Cancelling order for {} market. Old Price: {}, New Price: {}".format(market_name, openOrder[4],
-                                                                                          sellPrice))
-                ordersToBeCancelled.append(openOrder[1])
+            if market_trend.m != 0.0 and market_trend.scalingFactorX != 0.0:
+                sellPrice = toEightDigit(getSellPrice(market_trend))
+                if float(sellPrice) != float(openOrder[4]):
+                    logger.info(
+                        "Cancelling order for {} market. Old Price: {}, New Price: {}".format(market_name, openOrder[4],
+                                                                                              sellPrice))
+                    ordersToBeCancelled.append(openOrder[1])
+                else:
+                    logger.info("Sell order expired but not deleted for {} market. Old Price: {}, New Price: {}".format(
+                        market_name, openOrder[4], sellPrice))
             else:
-                logger.info("Sell order expired but not deleted for {} market. Old Price: {}, New Price: {}".format(
-                    market_name, openOrder[4], sellPrice))
+                logger.info("Cancel - {}({}) - Either m: {} or scaling factor: {} is zero, removing order".format(
+                    market_trend.marketName,
+                    market_trend.marketId,
+                    market_trend.m,
+                    market_trend.scalingFactorX
+                ))
+                ordersToBeCancelled.append(openOrder[1])
     return ordersToBeCancelled
 
 
