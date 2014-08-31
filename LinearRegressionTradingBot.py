@@ -342,9 +342,8 @@ if __name__ == "__main__":
 
     try:
         main(sys.argv[1:])
-    except Exception, err:
-        logger.error("Unexpected error: {}".format(sys.exc_info()[0]))
-        logger.info(err)
+    except Exception, ex:
+        logger.exception("Unexpected error: {}".format(sys.exc_info()[0]))
 
     elapsed = datetime.utcnow() - starttime
 
