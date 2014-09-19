@@ -110,13 +110,13 @@ def main(argv):
         num_sample = next((toEightDigit(market_trend.num_samples) for market_trend in recent_market_trends if
                            int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
 
-        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}, m: {}, #samples".format(tradeStat,
-                                                                                          std,
-                                                                                          toEightDigit(sell),
-                                                                                          toEightDigit(buy),
-                                                                                          toEightDigit(
-                                                                                              sell - buy - fee), m,
-                                                                                          num_sample)
+        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}, m: {}, #samples: {}".format(tradeStat,
+                                                                                              std,
+                                                                                              toEightDigit(sell),
+                                                                                              toEightDigit(buy),
+                                                                                              toEightDigit(
+                                                                                                  sell - buy - fee), m,
+                                                                                              num_sample)
 
     print "Worst markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_worst, total_sell_worst,
                                                                                  total_fee_worst,
