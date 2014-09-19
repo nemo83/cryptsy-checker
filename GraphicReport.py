@@ -72,6 +72,9 @@ def plot_diagram(market_name, market_id):
         market_trend = cryptsy_mongo.calculateMarketTrend(market_name, market_id,
                                                           interval=timedelta(days=1, hours=4 + (24 - m_hour)),
                                                           end_time=datetime.utcnow() - timedelta(hours=4 + (24 - m_hour)))
+        if market_trend.m == 0.0 or market_trend.scalingFactorX == 0.0:
+            continue
+
         for hour in range(0, m_hour + increment, 1):
             time_x = datetime.utcnow() - timedelta(hours=24 - hour)
             price_y = getNormalizedEstimatedPrice(market_trend, time_x)
