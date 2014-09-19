@@ -55,19 +55,33 @@ def plot_diagram(market_name, market_id):
     sell_trade_times = [trade_sample[0] for trade_sample in trade_samples if trade_sample[2] == 'Sell']
     sell_trade_price = [trade_sample[1] for trade_sample in trade_samples if trade_sample[2] == 'Sell']
 
-    times_x = []
-    prices_y = []
-    market_trend = cryptsy_mongo.calculateMarketTrend(market_name, market_id)
-    for hour in range(0, 24):
-        time_x = datetime.utcnow() - timedelta(hours=hour)
-        price_y = getNormalizedEstimatedPrice(market_trend, time_x)
-        times_x.append((toCryptsyServerTime(time_x) - epoch).total_seconds())
-        prices_y.append(price_y)
+    colours = {
+        0 : "k",
+        4 : "m",
+        8 : "g",
+        12 : "c",
+        16 : "b",
+        20 : "y",
+        24 : "k",
+    }
+
+    increment = 4
+    for m_hour in range(0, 24, increment):
+        times_x = []
+        prices_y = []
+        market_trend = cryptsy_mongo.calculateMarketTrend(market_name, market_id,
+                                                          interval=timedelta(days=1, hours=4 + (24 - m_hour)),
+                                                          end_time=datetime.utcnow() - timedelta(hours=4 + (24 - m_hour)))
+        for hour in range(0, m_hour + increment, 1):
+            time_x = datetime.utcnow() - timedelta(hours=24 - hour)
+            price_y = getNormalizedEstimatedPrice(market_trend, time_x)
+            times_x.append((toCryptsyServerTime(time_x) - epoch).total_seconds())
+            prices_y.append(price_y)
+            plt.plot(times_x, prices_y, "{}o".format(colours[m_hour]))
 
     plt.plot(times, prices)
     plt.plot(buy_trade_times, buy_trade_price, 'ro')
     plt.plot(sell_trade_times, sell_trade_price, 'go')
-    plt.plot(times_x, prices_y, 'ko')
     plt.savefig("{}.png".format("{}-{}".format(market_name.replace('/', '-'), market_id)), format='png')
     plt.close()
 

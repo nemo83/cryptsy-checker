@@ -53,11 +53,15 @@ class CryptsyMongo:
         market_trend_dict['time'] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         self.market_trend_collection.insert(market_trend_dict)
 
-    def calculateMarketTrend(self, market_name, market_id, interval=timedelta(days=1, hours=4)):
-        timeStart = datetime.utcnow() - interval
+    def calculateMarketTrend(self, market_name, market_id, interval=timedelta(days=1, hours=4),
+                             end_time=datetime.utcnow() - timedelta(hours=4)):
+        start_time = datetime.utcnow() - interval
 
-        cryptoCurrencyDataSamples = self.markets_collection.find(
-            {"name": market_name, "lasttradetime": {"$gt": timeStart.strftime("%Y-%m-%d %H:%M:%S")}})
+        cryptoCurrencyDataSamples = self.markets_collection.find({
+            "name": market_name
+            , "lasttradetime": {"$gt": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+                                "$lt": end_time.strftime("%Y-%m-%d %H:%M:%S")}
+        })
 
         tradeData = [(cryptoCurrencySample['lasttradetime'], cryptoCurrencySample['lasttradeprice']) for
                      cryptoCurrencySample in cryptoCurrencyDataSamples]
@@ -201,6 +205,7 @@ class CryptsyMongo:
             trade_results[market_id]['Fee'] = reduction[2]
 
         return trade_results
+
 
 class MarketTrend:
     def __init__(self, marketName, marketId, m=0.0, n=0.0, minX=0.0, scalingFactorX=0.0, minY=0.0, scalingFactorY=0.0,

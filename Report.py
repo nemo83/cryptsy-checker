@@ -21,14 +21,9 @@ def main(argv):
 
     global cryptsy_client
     cryptsy_client = CryptsyPy(public, private)
-    # cryptsy_mongo = CryptsyMongo(host="192.168.1.33")
-    cryptsy_mongo = CryptsyMongo()
+    cryptsy_mongo = CryptsyMongo(host="192.168.1.33")
 
-    recent_market_trends = cryptsy_mongo.getRecentMarketTrends()
-
-    recent_trades = cryptsy_client.getRecentTrades()
-    if recent_trades is not None:
-        cryptsy_mongo.persistTrades(recent_trades)
+    markets = cryptsy_client.getMarkets()
 
     if hours is not None:
         start_time = toCryptsyServerTime(datetime.utcnow() - timedelta(hours=int(hours)))
@@ -58,23 +53,23 @@ def main(argv):
         total_sell_best += sell
         total_fee_best += fee
 
-        std = next((toEightDigit(market_trend.std) for market_trend in recent_market_trends if
-                    int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+        market_name = next((market_name for market_name in markets if int(markets[market_name]) == int(tradeStat)))
 
-        m = next((toEightDigit(market_trend.m) for market_trend in recent_market_trends if
-                  int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+        market_trend = cryptsy_mongo.calculateMarketTrend(market_name, tradeStat)
 
-        num_sample = next((toEightDigit(market_trend.num_samples) for market_trend in recent_market_trends if
-                           int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+        std = market_trend.std
+        m = market_trend.m
+        num_sample = market_trend.num_samples
 
-        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}, m: {}, #samples: {}".format(tradeStat,
-                                                                                              std,
-                                                                                              toEightDigit(sell),
-                                                                                              toEightDigit(buy),
-                                                                                              toEightDigit(
-                                                                                                  sell - buy - fee),
-                                                                                              m,
-                                                                                              num_sample)
+        print "{} - ({}), Std:{}, Sell: {}, Buy: {}, Earn: {}, m: {}, #samples: {}".format(market_name,
+                                                                                           tradeStat,
+                                                                                           toEightDigit(std),
+                                                                                           toEightDigit(sell),
+                                                                                           toEightDigit(buy),
+                                                                                           toEightDigit(
+                                                                                               sell - buy - fee),
+                                                                                           m,
+                                                                                           num_sample)
 
     print "Best markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_best, total_sell_best,
                                                                                 total_fee_best,
@@ -101,22 +96,22 @@ def main(argv):
         total_sell_worst += sell
         total_fee_worst += fee
 
-        std = next((toEightDigit(market_trend.std) for market_trend in recent_market_trends if
-                    int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+        market_name = next((market_name for market_name in markets if int(markets[market_name]) == int(tradeStat)))
 
-        m = next((toEightDigit(market_trend.m) for market_trend in recent_market_trends if
-                  int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+        market_trend = cryptsy_mongo.calculateMarketTrend(market_name, tradeStat)
 
-        num_sample = next((toEightDigit(market_trend.num_samples) for market_trend in recent_market_trends if
-                           int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+        std = market_trend.std
+        m = market_trend.m
+        num_sample = market_trend.num_samples
 
-        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}, m: {}, #samples: {}".format(tradeStat,
-                                                                                              std,
-                                                                                              toEightDigit(sell),
-                                                                                              toEightDigit(buy),
-                                                                                              toEightDigit(
-                                                                                                  sell - buy - fee), m,
-                                                                                              num_sample)
+        print "{} - ({}), Std:{}, Sell: {}, Buy: {}, Earn: {}, m: {}, #samples: {}".format(market_name,
+                                                                                           tradeStat,
+                                                                                           toEightDigit(std),
+                                                                                           toEightDigit(sell),
+                                                                                           toEightDigit(buy),
+                                                                                           toEightDigit(
+                                                                                               sell - buy - fee), m,
+                                                                                           num_sample)
 
     print "Worst markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_worst, total_sell_worst,
                                                                                  total_fee_worst,
