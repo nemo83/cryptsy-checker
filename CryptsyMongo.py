@@ -153,6 +153,55 @@ class CryptsyMongo:
 
         return sortedTradeStats
 
+
+    def getLastTrades(self, time_start=(datetime.utcnow() - timedelta(hours=24))):
+        return self.trades_collection.find({"datetime": {"$gt": time_start.strftime("%Y-%m-%d %H:%M:%S")}}).sort(
+            'tradeid', 1)
+
+    def getAllTradesFrom(self, time_start):
+
+        mongo_trade_stats = self.getLastTrades(time_start)
+
+        trade_stats = {}
+        for trade_stat in mongo_trade_stats:
+            market_id = trade_stat['marketid']
+            trade_type = trade_stat['tradetype']
+
+            if trade_type == 'Sell' and market_id not in trade_stats:
+                continue
+            elif market_id not in trade_stats:
+                trade_stats[market_id] = []
+
+            trade_stats[market_id].append(trade_stat)
+
+        for trade_stat in trade_stats:
+            while len(trade_stats[trade_stat]) > 0 and trade_stats[trade_stat][-1]['tradetype'] == 'Buy':
+                trade_stats[trade_stat].pop()
+
+        indexes_to_be_removed = [trade_stat for trade_stat in trade_stats if len(trade_stats[trade_stat]) == 0]
+
+        for index in indexes_to_be_removed:
+            trade_stats.pop(index, None)
+
+        trade_results = {}
+        for market_id in trade_stats:
+            activities = map(
+                lambda trade_stat: (float(trade_stat['total']) if trade_stat['tradetype'] == 'Buy' else 0.0,
+                                    float(trade_stat['total']) if trade_stat['tradetype'] == 'Sell' else 0.0,
+                                    float(trade_stat['fee']), 1),
+                trade_stats[market_id])
+
+            reduction = reduce(lambda x, y: (x[0] + y[0], x[1] + y[1], x[2] + y[2], x[3] + y[3]), activities,
+                               (0.0, 0.0, 0.0, 0))
+
+            trade_results[market_id] = {}
+            trade_results[market_id]['NumTrades'] = reduction[3]
+            trade_results[market_id]['Buy'] = reduction[0]
+            trade_results[market_id]['Sell'] = reduction[1]
+            trade_results[market_id]['Fee'] = reduction[2]
+
+        return trade_results
+
 class MarketTrend:
     def __init__(self, marketName, marketId, m=0.0, n=0.0, minX=0.0, scalingFactorX=0.0, minY=0.0, scalingFactorY=0.0,
                  avg=0.0, std=0.0, num_samples=0, sample_time=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")):
