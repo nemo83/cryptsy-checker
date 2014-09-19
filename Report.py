@@ -1,7 +1,6 @@
 import getopt
 import sys
-from datetime import datetime, timedelta, date
-
+from datetime import datetime, timedelta
 
 from CryptsyPy import CryptsyPy, toCryptsyServerTime, toEightDigit
 from CryptsyMongo import CryptsyMongo
@@ -60,10 +59,22 @@ def main(argv):
         total_fee_best += fee
 
         std = next((toEightDigit(market_trend.std) for market_trend in recent_market_trends if
-                    int(market_trend.marketId) == int(tradeStat)), None)
-        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, std,
-                                                                         toEightDigit(sell), toEightDigit(buy),
-                                                                         toEightDigit(sell - buy - fee))
+                    int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+
+        m = next((toEightDigit(market_trend.m) for market_trend in recent_market_trends if
+                  int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+
+        num_sample = next((toEightDigit(market_trend.num_samples) for market_trend in recent_market_trends if
+                           int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+
+        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}, m: {}, #samples: {}".format(tradeStat,
+                                                                                              std,
+                                                                                              toEightDigit(sell),
+                                                                                              toEightDigit(buy),
+                                                                                              toEightDigit(
+                                                                                                  sell - buy - fee),
+                                                                                              m,
+                                                                                              num_sample)
 
     print "Best markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_best, total_sell_best,
                                                                                 total_fee_best,
@@ -91,10 +102,21 @@ def main(argv):
         total_fee_worst += fee
 
         std = next((toEightDigit(market_trend.std) for market_trend in recent_market_trends if
-                    int(market_trend.marketId) == int(tradeStat)), None)
-        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}".format(tradeStat, std,
-                                                                         toEightDigit(sell), toEightDigit(buy),
-                                                                         toEightDigit(sell - buy - fee))
+                    int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+
+        m = next((toEightDigit(market_trend.m) for market_trend in recent_market_trends if
+                  int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+
+        num_sample = next((toEightDigit(market_trend.num_samples) for market_trend in recent_market_trends if
+                           int(market_trend.marketId) == int(tradeStat)), toEightDigit(0.0))
+
+        print "MarketId: {}, Std:{}, Sell: {}, Buy: {}, Earn: {}, m: {}, #samples".format(tradeStat,
+                                                                                          std,
+                                                                                          toEightDigit(sell),
+                                                                                          toEightDigit(buy),
+                                                                                          toEightDigit(
+                                                                                              sell - buy - fee), m,
+                                                                                          num_sample)
 
     print "Worst markets total: buy: {}, sell: {}, fee:{} - earnings: {}".format(total_buy_worst, total_sell_worst,
                                                                                  total_fee_worst,
