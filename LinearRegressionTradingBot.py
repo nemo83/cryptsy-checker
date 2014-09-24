@@ -29,6 +29,7 @@ logger.addHandler(ch)
 
 FEE = 0.0025
 BASE_STAKE = 0.0005
+TEST_STAKE = 0.00005000
 MINIMUM_AMOUNT_TO_INVEST = 0.0005
 
 sell_only = False
@@ -128,12 +129,10 @@ def investBTC(btcBalance, activeMarkets, markets):
             desiredAmountToInvest = BASE_STAKE * 6
         elif marketTrend.marketId in bestPerformingMarkets[3:6]:
             desiredAmountToInvest = BASE_STAKE * 3
-        elif marketTrend.marketId in bestPerformingMarkets[6:10]:
-            desiredAmountToInvest = BASE_STAKE * 2
-        elif marketTrend.marketId in bestPerformingMarkets[10:]:
-            desiredAmountToInvest = BASE_STAKE * 1
+        elif marketTrend.marketId in bestPerformingMarkets[6:]:
+            desiredAmountToInvest = TEST_STAKE
         else:
-            desiredAmountToInvest = BASE_STAKE
+            desiredAmountToInvest = TEST_STAKE
 
         amountToInvest = min(desiredAmountToInvest, btcBalance)
 
