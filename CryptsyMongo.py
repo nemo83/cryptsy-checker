@@ -111,6 +111,11 @@ class CryptsyMongo:
 
         return marketTrend
 
+    def estimateValue(self, x, m, n, minX, scalingFactorX, minY, scalingFactorY):
+        x_ = (float(x) - minX) / scalingFactorX
+        y_ = x_ * m + n
+        return y_ * scalingFactorY + minY
+
     def persistTrades(self, trades):
         latest_trade = next(self.trades_collection.find().sort('tradeid', -1).limit(1), None)
         last_trade_id = 0 if latest_trade is None else latest_trade['tradeid']
