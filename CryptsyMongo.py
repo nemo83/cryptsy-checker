@@ -84,19 +84,29 @@ class CryptsyMongo:
 
         normalizedPrices, minPrice, priceScalingFactor = normalizeValues(prices)
 
-        currencyTrend = numpy.polyfit(normalizedTimes, normalizedPrices, 1)
+        if priceScalingFactor == 0.0 or timeScalingFactor == 0.0:
+            # logger.info("priceScalingFactor: {}, timeScalingFactor: {}".format(priceScalingFactor, timeScalingFactor))
+            return MarketTrend(market_name, market_id)
 
-        prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
+        trend = numpy.polyfit(normalizedTimes, normalizedPrices, 1)
+
+        unique_prices = [float(uniqueTradeDataSample[1]) for uniqueTradeDataSample in list(uniqueTradeData)]
+
+        trend_normalized_prices = [price - (
+            self.estimateValue(times[index], trend[0], trend[1], minTime, timeScalingFactor, minPrice,
+                               priceScalingFactor)) for index, price in enumerate(prices)]
+
+        trend_normalized_prices = [float(translated_price) / 100000000 for translated_price in trend_normalized_prices]
 
         marketTrend = MarketTrend(marketName=market_name, marketId=market_id,
-                                  m=currencyTrend[0],
-                                  n=currencyTrend[1],
+                                  m=trend[0],
+                                  n=trend[1],
                                   minX=minTime,
                                   scalingFactorX=timeScalingFactor,
                                   minY=minPrice,
                                   scalingFactorY=priceScalingFactor,
-                                  avg=numpy.average(prices),
-                                  std=numpy.std(prices),
+                                  avg=numpy.average(unique_prices),
+                                  std=numpy.std(trend_normalized_prices),
                                   num_samples=num_samples)
 
         return marketTrend
